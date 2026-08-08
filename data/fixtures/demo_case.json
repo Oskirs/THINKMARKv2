@@ -1,0 +1,75 @@
+{
+  "case_id": "CASO-DEMO-01",
+  "course": "Innovación y toma de decisiones",
+  "title": "Uso responsable de IA para orientar la permanencia estudiantil",
+  "central_question": "¿Debe la universidad utilizar un sistema de IA para identificar estudiantes que podrían necesitar apoyo académico?",
+  "context": "Una universidad analiza adoptar un sistema que combina actividad académica, asistencia y uso de plataformas para sugerir intervenciones tempranas. El equipo debe valorar beneficios, límites, evidencia y salvaguardas antes de decidir.",
+  "facts": [
+    "El sistema produciría alertas para revisión humana; no tomaría decisiones automáticas.",
+    "Los datos disponibles tienen diferencias de cobertura entre programas.",
+    "El piloto propuesto duraría ocho semanas con participación voluntaria."
+  ],
+  "participant": {
+    "participant_id": "TM-DEMO-024",
+    "session_id": "SES-DEMO-2026",
+    "mode": "Demostración"
+  },
+  "initial": {
+    "problem": "La universidad necesita apoyar antes a quienes enfrentan dificultades sin convertir una señal estadística en una etiqueta.",
+    "evidence": "Necesitaría datos sobre precisión, sesgos entre programas y resultados de intervenciones semejantes.",
+    "ai_critique": "La IA podría confundir menor actividad digital con falta de compromiso.",
+    "decision": "Aceptaría un piloto pequeño si existe revisión humana y el estudiante conoce el uso de sus datos."
+  },
+  "coach": {
+    "focus": "evidencia",
+    "question": "¿Qué evidencia te permitiría distinguir una alerta útil de una clasificación injusta?",
+    "answer": "Compararía falsos positivos por programa y preguntaría si la alerta produjo apoyo útil."
+  },
+  "verification": {
+    "claim": "Las alertas tempranas siempre mejoran la permanencia.",
+    "source_title": "Estudio demostrativo sobre sistemas de alerta",
+    "source_url": "https://example.org/estudio-demostrativo",
+    "assessment": "matiza",
+    "impact": "La utilidad depende de la intervención posterior y de la calidad de los datos."
+  },
+  "challenge": {
+    "limitation": "La recomendación no explica diferencias de cobertura digital.",
+    "assumption": "Supone que menor actividad significa mayor riesgo.",
+    "missing_evidence": "Resultados separados por programa y modalidad.",
+    "alternative": "Usar la alerta como invitación a conversar, no como clasificación."
+  },
+  "decision": {
+    "position": "aceptar parcialmente",
+    "keep": "Un piloto limitado y con acompañamiento humano.",
+    "change": "Excluir decisiones automáticas y publicar criterios de revisión.",
+    "tradeoff": "Se reduce velocidad para mejorar explicabilidad y confianza."
+  },
+  "final": {
+    "problem": "El reto no es predecir abandono, sino orientar apoyo sin amplificar desigualdades ni quitar agencia.",
+    "evidence": "Compararía desempeño e impacto por programa, modalidad y tipo de intervención.",
+    "ai_critique": "Una correlación de actividad no demuestra necesidad; deben revisarse cobertura, sesgo y explicabilidad.",
+    "decision": "Realizaría un piloto voluntario, sin decisiones automáticas, con auditoría por subgrupos y derecho a aclaración."
+  },
+  "delta": {
+    "problem": [2, 4],
+    "evidence": [2, 3],
+    "ai_critique": [2, 4],
+    "decision": [2, 4]
+  },
+  "thinkmark": {
+    "reframed_problem": "Orientar apoyo temprano sin convertir correlaciones en etiquetas.",
+    "reviewed_evidence": "Precisión por subgrupo, falsos positivos e impacto real de la intervención.",
+    "ai_analysis": "La recomendación omitía cobertura desigual y confundía actividad con necesidad.",
+    "human_decision": "Piloto voluntario, revisión humana, auditoría y derecho a aclaración.",
+    "change": "La postura pasó de una aceptación condicionada a un diseño explícito de salvaguardas.",
+    "human_contribution": "Definí los criterios de justicia y el uso de la alerta como invitación.",
+    "limits": "Falta validar resultados con datos reales y participación estudiantil."
+  },
+  "dashboard": {
+    "started": 24,
+    "completed": 18,
+    "median_minutes": 31,
+    "opportunity": "Fortalecer la valoración de fuentes: seis participantes citan evidencia, pero no explican su calidad.",
+    "intervention": "Modelar en clase una comparación breve entre relevancia, confiabilidad y limitaciones de dos fuentes."
+  }
+}
