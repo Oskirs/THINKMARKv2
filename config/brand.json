@@ -1,16 +1,16 @@
 {
   "app_name": "THINKMARK",
-  "tagline": "Human reasoning, made visible",
+  "tagline": "Razonamiento humano, hecho visible",
   "logo_path": "assets/logo_placeholder.svg",
-  "primary": "#5B4BDB",
-  "primary_dark": "#4032A8",
-  "accent": "#16A394",
-  "ink": "#182033",
-  "muted": "#667085",
+  "primary": "#76232F",
+  "primary_dark": "#641723",
+  "accent": "#ED8B00",
+  "ink": "#1A1E40",
+  "muted": "#5D6278",
   "surface": "#FFFFFF",
-  "canvas": "#F7F8FC",
-  "border": "#DDE1EA",
-  "success": "#147D64",
-  "warning": "#B66A12",
-  "font_family": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+  "canvas": "#F7F7F7",
+  "border": "#E0D8D9",
+  "success": "#2F755E",
+  "warning": "#A85F00",
+  "font_family": "Montserrat, Arial, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
 }

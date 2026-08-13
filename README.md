@@ -1,16 +1,21 @@
 # THINKMARK v2 — prototipo Streamlit
 
-Base navegable del MVP para hacer visible el cambio del razonamiento humano antes,
-durante y después de una interacción guiada con IA. El paso 6.1 utiliza exclusivamente
-datos simulados: todavía no envía información a una base de datos ni a una API de IA.
+MVP para hacer visible el cambio del razonamiento humano antes, durante y después
+de una interacción guiada con IA. El paso 6.2 incorpora acceso pseudónimo, consentimiento,
+recuperación de sesión y línea base inmutable. Todavía no envía información a Supabase
+ni a una API de IA.
 
 ## Qué contiene
 
 - 12 pantallas: E01–E10, V01 y D01.
-- Navegación y estado temporal con `st.session_state`.
+- Navegación secuencial y estado temporal con `st.session_state`.
+- E01 funcional con tres consentimientos obligatorios.
+- E02 funcional con borrador recuperable, validaciones y cierre irreversible.
+- Persistencia JSON local mediante un repositorio reemplazable por Supabase.
 - Caso y recorrido de demostración separados del código.
-- Dashboard docente con oportunidad de aprendizaje.
+- Dashboard docente con gráfica nativa y oportunidad de aprendizaje.
 - Configuración estética desacoplada.
+- Paleta alineada con los colores observados en los activos públicos oficiales de la UAG.
 - Pruebas automáticas para el registro de pantallas y los fixtures.
 
 ## Ejecutar localmente
@@ -44,11 +49,25 @@ Conviene mantener suficiente contraste y probar la vista en computadora y tablet
 Editar o duplicar `data/fixtures/demo_case.json`. El cargador valida campos mínimos y
 mantiene el contenido independiente de las pantallas.
 
+## Persistencia temporal del paso 6.2
+
+Las sesiones se guardan en `data/runtime/sessions.json`; la carpeta está excluida de
+Git. Esto permite probar recuperación e inmutabilidad sin configurar servicios externos.
+En Streamlit Community Cloud el almacenamiento local es efímero y no debe usarse para
+un piloto real. El paso 6.8 reemplazará este adaptador por Supabase con políticas de acceso.
+
 ## Pruebas
 
 ```bash
 pytest -q
 python -m compileall app.py src tests
+```
+
+Las herramientas de prueba están separadas en `requirements-dev.txt` para evitar
+instalarlas en Streamlit Community Cloud. Para desarrollo puede usarse:
+
+```bash
+python -m pip install -r requirements-dev.txt
 ```
 
 ## Publicación preliminar
@@ -58,11 +77,14 @@ python -m compileall app.py src tests
 3. Seleccionar `app.py` como archivo principal.
 4. No agregar secretos todavía: el paso 6.1 no los necesita.
 
+El MVP utiliza únicamente componentes nativos de Streamlit en producción. Esta
+decisión evita que la demostración falle por dependencias opcionales de gráficas.
+
 La conexión a Supabase, las políticas de seguridad y el despliegue final corresponden
 al paso 6.8. La IA real se incorpora en el paso 6.4 mediante un adaptador separado.
 
-## Límite del paso 6.1
+## Límite del paso 6.2
 
-Las doce rutas están abiertas intencionalmente para revisión del equipo. El bloqueo
-secuencial, la línea base inmutable y la recuperación de sesión se implementarán en
-el paso 6.2.
+E03 y las pantallas posteriores permanecen bloqueadas hasta cerrar la línea base.
+Después del cierre se habilitan como vistas demostrativas; su lógica se incorporará
+en los pasos 6.3–6.7.

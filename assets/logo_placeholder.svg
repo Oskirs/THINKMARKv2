@@ -1,6 +1,5 @@
-<svg width="240" height="64" viewBox="0 0 240 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="THINKMARK">
-  <rect width="64" height="64" rx="18" fill="#5B4BDB"/>
-  <path d="M19 20h26M32 20v25" stroke="white" stroke-width="6" stroke-linecap="round"/>
-  <circle cx="45" cy="44" r="5" fill="#56D6C5"/>
-  <text x="78" y="40" fill="#182033" font-family="Arial, sans-serif" font-size="22" font-weight="700">THINKMARK</text>
+<svg width="300" height="68" viewBox="0 0 300 68" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="THINKMARK">
+  <text x="0" y="40" fill="#76232F" font-family="Montserrat, Arial, sans-serif" font-size="36" font-weight="800" letter-spacing="1">THINKMARK</text>
+  <rect x="2" y="51" width="252" height="4" rx="2" fill="#ED8B00"/>
+  <circle cx="270" cy="53" r="7" fill="#ED8B00"/>
 </svg>

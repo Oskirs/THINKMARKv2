@@ -8,9 +8,9 @@ from typing import Any
 import streamlit as st
 
 
-def render_sidebar(groups: Mapping[str, Sequence[Any]], current: str) -> str:
+def render_sidebar(groups: Mapping[str, Sequence[Any]], current: str, allowed: set[str]) -> str:
     st.markdown("#### Recorrido")
-    options = [screen.screen_id for screens in groups.values() for screen in screens]
+    options = [screen.screen_id for screens in groups.values() for screen in screens if screen.screen_id in allowed]
     labels = {
         screen.screen_id: f"{screen.screen_id} · {screen.label}"
         for screens in groups.values()
@@ -24,9 +24,14 @@ def render_sidebar(groups: Mapping[str, Sequence[Any]], current: str) -> str:
         label_visibility="collapsed",
     )
     st.divider()
-    st.caption("Sesión simulada")
+    st.caption("Sesión actual")
     st.code(st.session_state.session_id, language=None)
-    st.info("En el paso 6.1 todas las rutas están abiertas para facilitar la revisión del equipo.")
+    if st.session_state.baseline_locked:
+        st.success("Línea base cerrada · recorrido habilitado")
+    elif st.session_state.consent_status:
+        st.info("Completa E02 para habilitar el resto del recorrido.")
+    else:
+        st.info("Acepta las condiciones de E01 para crear o recuperar una sesión.")
     return selected
 
 

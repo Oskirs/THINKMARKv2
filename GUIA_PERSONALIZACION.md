@@ -18,6 +18,20 @@ de 4:1. El encabezado principal admite hasta 220 px de ancho y el lateral 180 px
 
 ## 2. Cambiar colores de marca
 
+La configuración inicial usa la paleta observada en los activos públicos oficiales
+de la UAG consultados el 10 de agosto de 2026:
+
+Fuente de referencia: `https://www.uag.mx/` y su hoja de estilos pública vigente en
+la fecha de consulta.
+
+- Tinto principal: `#76232F`.
+- Tinto oscuro: `#641723`.
+- Naranja de acento: `#ED8B00`.
+- Azul profundo: `#1A1E40`.
+
+Esta aplicación de color debe validarse con el área institucional correspondiente
+antes de una publicación definitiva; no sustituye un manual de identidad autorizado.
+
 Editar en `config/brand.json`:
 
 - `primary`: acciones y énfasis.
