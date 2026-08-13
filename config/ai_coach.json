@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "provider": "openai",
+  "model": "gpt-5.4-mini",
+  "policy_version": "coach-socratic-v1",
+  "prompt_version": "coach-prompt-v1",
+  "prompt_path": "config/prompts/coach_socratic_v1.txt",
+  "max_turns": 3,
+  "minimum_turns": 1,
+  "minimum_response_chars": 40,
+  "timeout_seconds": 20,
+  "fallback_enabled": true
+}

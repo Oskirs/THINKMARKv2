@@ -54,3 +54,18 @@ def test_repository_recovers_draft_and_rejects_locked_overwrite(tmp_path: Path) 
     changed = locked | {"baseline_snapshot": {"responses": {"problem": "alterado"}}}
     with pytest.raises(ValueError, match="no puede modificarse"):
         repository.save(changed)
+
+
+def test_repository_rejects_submitted_reflection_overwrite(tmp_path: Path) -> None:
+    repository = LocalSessionRepository(tmp_path / "sessions.json")
+    submitted = {
+        "participant_id": "TM-DEMO-025",
+        "session_id": "SES-FINAL",
+        "baseline_locked": False,
+        "baseline_snapshot": {},
+        "reflection_submitted": True,
+        "final_responses": {"responses": {"problem": "versión final"}, "integrity_hash": "abc"},
+    }
+    repository.save(submitted)
+    with pytest.raises(ValueError, match="reflexión enviada"):
+        repository.save(submitted | {"final_responses": {"responses": {"problem": "alterada"}}})

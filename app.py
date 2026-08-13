@@ -44,6 +44,6 @@ screen = get_screen(st.session_state.current_screen)
 screen.renderer(demo_case)
 
 st.caption(
-    "Prototipo THINKMARK v2 · Paso 6.2 · Persistencia local simulada · "
+    "Prototipo THINKMARK v2 · Paso 6.4 · AI Coach con guardrails y fallback · "
     "La actividad no asigna calificación."
 )

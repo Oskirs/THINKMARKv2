@@ -26,8 +26,18 @@ def render_sidebar(groups: Mapping[str, Sequence[Any]], current: str, allowed: s
     st.divider()
     st.caption("Sesión actual")
     st.code(st.session_state.session_id, language=None)
-    if st.session_state.baseline_locked:
-        st.success("Línea base cerrada · recorrido habilitado")
+    if st.session_state.reflection_submitted:
+        st.success("Recorrido enviado · awaiting_review")
+    elif st.session_state.decision_completed:
+        st.info("Siguiente etapa: E07 · Reflect")
+    elif st.session_state.challenge_completed:
+        st.info("Siguiente etapa: E06 · Decide")
+    elif st.session_state.verification_completed:
+        st.info("Siguiente etapa: E05 · Challenge")
+    elif st.session_state.coach_completed or st.session_state.coach_simulation_completed:
+        st.info("Siguiente etapa: E04 · Verify")
+    elif st.session_state.baseline_locked:
+        st.info("Siguiente etapa: E03 · conversación con el AI Coach")
     elif st.session_state.consent_status:
         st.info("Completa E02 para habilitar el resto del recorrido.")
     else:
@@ -43,7 +53,7 @@ def render_progress(current: str) -> None:
 
 
 def screen_title(screen_id: str, title: str, objective: str) -> None:
-    st.markdown(f"<div class='tm-eyebrow'>{screen_id} · PROTOTIPO NAVEGABLE</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='tm-eyebrow'>{screen_id} · MVP THINKMARK</div>", unsafe_allow_html=True)
     st.title(title)
     st.write(objective)
 

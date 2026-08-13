@@ -1,9 +1,9 @@
 # THINKMARK v2 — prototipo Streamlit
 
 MVP para hacer visible el cambio del razonamiento humano antes, durante y después
-de una interacción guiada con IA. El paso 6.2 incorpora acceso pseudónimo, consentimiento,
-recuperación de sesión y línea base inmutable. Todavía no envía información a Supabase
-ni a una API de IA.
+de una interacción guiada con IA. El paso 6.4 incorpora un AI Coach socrático mediante
+un adaptador de Responses API, guardrails y un banco pedagógico de fallo seguro. Todavía
+no envía información a Supabase.
 
 ## Qué contiene
 
@@ -11,6 +11,10 @@ ni a una API de IA.
 - Navegación secuencial y estado temporal con `st.session_state`.
 - E01 funcional con tres consentimientos obligatorios.
 - E02 funcional con borrador recuperable, validaciones y cierre irreversible.
+- E03 con hasta tres preguntas socráticas, salida estructurada, trazabilidad y cierre decidido por el estudiante.
+- Adaptador OpenAI configurable y fallback que conserva el recorrido cuando no hay clave o la salida se bloquea.
+- E04–E07 funcionales, secuenciales y recuperables.
+- Envío final a estado `awaiting_review` sin sobrescribir la línea base.
 - Persistencia JSON local mediante un repositorio reemplazable por Supabase.
 - Caso y recorrido de demostración separados del código.
 - Dashboard docente con gráfica nativa y oportunidad de aprendizaje.
@@ -49,7 +53,16 @@ Conviene mantener suficiente contraste y probar la vista en computadora y tablet
 Editar o duplicar `data/fixtures/demo_case.json`. El cargador valida campos mínimos y
 mantiene el contenido independiente de las pantallas.
 
-## Persistencia temporal del paso 6.2
+## Configurar el AI Coach del paso 6.4
+
+El prototipo funciona inmediatamente con el banco pedagógico seguro. Para activar la
+API real, seguir `GUIA_AI_COACH.md`. Los secretos se leen desde `.streamlit/secrets.toml`
+o variables de entorno y nunca deben entrar al repositorio.
+
+La configuración desacoplada está en `config/ai_coach.json`. El modelo predeterminado
+puede sobrescribirse con `OPENAI_MODEL` sin cambiar el código.
+
+## Persistencia temporal
 
 Las sesiones se guardan en `data/runtime/sessions.json`; la carpeta está excluida de
 Git. Esto permite probar recuperación e inmutabilidad sin configurar servicios externos.
@@ -75,16 +88,15 @@ python -m pip install -r requirements-dev.txt
 1. Subir esta carpeta a un repositorio de GitHub.
 2. En Streamlit Community Cloud, crear una app desde el repositorio.
 3. Seleccionar `app.py` como archivo principal.
-4. No agregar secretos todavía: el paso 6.1 no los necesita.
+4. Para IA real, agregar `OPENAI_API_KEY` y opcionalmente `OPENAI_MODEL` en los secretos de la app.
 
 El MVP utiliza únicamente componentes nativos de Streamlit en producción. Esta
 decisión evita que la demostración falle por dependencias opcionales de gráficas.
 
 La conexión a Supabase, las políticas de seguridad y el despliegue final corresponden
-al paso 6.8. La IA real se incorpora en el paso 6.4 mediante un adaptador separado.
+al paso 6.8.
 
-## Límite del paso 6.2
+## Límite del paso 6.4
 
-E03 y las pantallas posteriores permanecen bloqueadas hasta cerrar la línea base.
-Después del cierre se habilitan como vistas demostrativas; su lógica se incorporará
-en los pasos 6.3–6.7.
+El Coach sólo acompaña E03 y no busca fuentes ni evalúa el trabajo. V01 es únicamente
+una vista previa: la evaluación y el Reasoning Delta se implementarán en el paso 6.5.

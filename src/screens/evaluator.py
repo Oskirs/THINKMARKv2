@@ -11,6 +11,11 @@ from src.ui.layout import demo_notice, screen_title
 
 def render_v01(data: dict[str, Any]) -> None:
     screen_title("V01", "Aplicación y validación de la rúbrica", "Compara evidencia inicial y final; una persona evaluadora valida cada nivel.")
+    if st.session_state.access_notice:
+        st.info(st.session_state.pop("access_notice"))
+    st.warning("Vista previa. La aplicación funcional de la rúbrica y el cálculo reproducible del Delta se implementarán en el paso 6.5.")
+    initial_evidence = st.session_state.initial_responses
+    final_evidence = st.session_state.final_responses.get("responses", {})
     dimensions = [
         ("Problema", "problem"),
         ("Evidencia", "evidence"),
@@ -22,10 +27,9 @@ def render_v01(data: dict[str, Any]) -> None:
         with tab:
             initial, final = st.columns(2)
             initial.markdown("**Evidencia inicial**")
-            initial.write(data["initial"][key])
+            initial.write(initial_evidence.get(key, ""))
             final.markdown("**Evidencia final**")
-            final.write(data["final"][key])
-            levels = data["delta"][key]
-            st.caption(f"Evaluación demostrativa: nivel inicial {levels[0]} · nivel final {levels[1]} · delta {levels[1]-levels[0]:+d}")
+            final.write(final_evidence.get(key, ""))
+            st.caption("Pendiente de valoración humana con niveles 1–4.")
     st.warning("El sistema calcula la diferencia; no sustituye la valoración humana ni expone razonamiento interno de la IA.")
     demo_notice("el paso 6.5")

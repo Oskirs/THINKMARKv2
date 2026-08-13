@@ -40,5 +40,7 @@ class LocalSessionRepository:
         existing = sessions.get(record["participant_id"])
         if existing and existing.get("baseline_locked") and record.get("baseline_snapshot") != existing.get("baseline_snapshot"):
             raise ValueError("La línea base cerrada no puede modificarse.")
+        if existing and existing.get("reflection_submitted") and record.get("final_responses") != existing.get("final_responses"):
+            raise ValueError("La reflexión enviada no puede modificarse.")
         sessions[record["participant_id"]] = record
         self._write_all(sessions)
