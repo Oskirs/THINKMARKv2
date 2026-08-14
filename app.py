@@ -34,7 +34,7 @@ except ConfigurationError as exc:
 if not st.session_state.access_role:
     render_brand_header()
     render_access_portal()
-    st.caption("Prototipo THINKMARK v2 · Paso 6.8.2 · Acceso separado y casos adaptados por perfil académico")
+    st.caption("Prototipo THINKMARK v2 · Paso 6.8.3 · Catálogo UAG y casos por perfil académico")
     st.stop()
 
 if st.session_state.access_role == "evaluator" and not st.session_state.internal_session_loaded:
@@ -74,6 +74,6 @@ screen = get_screen(st.session_state.current_screen)
 screen.renderer(demo_case)
 
 st.caption(
-    "Prototipo THINKMARK v2 · Paso 6.8.2 · Carrera, semestre y caso adaptado · "
+    "Prototipo THINKMARK v2 · Paso 6.8.3 · Escuela, carrera, semestre y caso adaptado · "
     "La actividad no asigna calificación."
 )

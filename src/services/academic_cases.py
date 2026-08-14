@@ -19,7 +19,7 @@ CATALOG_PATH = ROOT / "data" / "fixtures" / "academic_case_catalog.json"
 def load_academic_catalog() -> dict[str, Any]:
     with CATALOG_PATH.open(encoding="utf-8") as source:
         catalog = json.load(source)
-    required = {"catalog_version", "semesters", "programs"}
+    required = {"catalog_version", "semesters", "areas", "programs"}
     missing = required.difference(catalog)
     if missing:
         raise ValueError(f"Catálogo académico incompleto; faltan: {', '.join(sorted(missing))}")
@@ -28,12 +28,26 @@ def load_academic_catalog() -> dict[str, Any]:
     program_ids = [program["program_id"] for program in catalog["programs"]]
     if len(program_ids) != len(set(program_ids)):
         raise ValueError("El catálogo académico contiene identificadores de programa repetidos.")
+    area_ids = [area["area_id"] for area in catalog["areas"]]
+    if len(area_ids) != len(set(area_ids)):
+        raise ValueError("El catálogo académico contiene identificadores de área repetidos.")
+    unknown_areas = {program["area_id"] for program in catalog["programs"]}.difference(area_ids)
+    if unknown_areas:
+        raise ValueError(f"Hay programas asociados a áreas inexistentes: {', '.join(sorted(unknown_areas))}")
     return catalog
 
 
-def program_options() -> dict[str, str]:
-    """Devuelve etiqueta -> id para usarla directamente en el menú."""
-    return {program["label"]: program["program_id"] for program in load_academic_catalog()["programs"]}
+def area_options() -> dict[str, str]:
+    """Devuelve escuela/área -> id en el orden publicado por el catálogo."""
+    return {area["label"]: area["area_id"] for area in load_academic_catalog()["areas"]}
+
+
+def program_options(area_id: str | None = None) -> dict[str, str]:
+    """Devuelve carrera -> id; si hay área, limita el menú a esa escuela."""
+    programs = load_academic_catalog()["programs"]
+    if area_id is not None:
+        programs = [program for program in programs if program["area_id"] == area_id]
+    return {program["label"]: program["program_id"] for program in programs}
 
 
 def semester_options() -> dict[str, int]:
@@ -60,11 +74,13 @@ def build_academic_profile(program_id: str, semester: int) -> dict[str, Any]:
         raise ValueError("La selección académica no es válida.")
     catalog = load_academic_catalog()
     program = next(item for item in catalog["programs"] if item["program_id"] == program_id)
+    area = next(item for item in catalog["areas"] if item["area_id"] == program["area_id"])
     semester_data = catalog["semesters"][str(semester)]
     return {
         "program_id": program_id,
         "program_label": program["label"],
-        "area": program["area"],
+        "area_id": area["area_id"],
+        "area": area["label"],
         "semester": semester,
         "semester_label": semester_data["label"],
         "complexity_label": semester_data["complexity_label"],
@@ -77,22 +93,23 @@ def build_case_for_profile(program_id: str, semester: int) -> dict[str, Any]:
     profile = build_academic_profile(program_id, semester)
     catalog = load_academic_catalog()
     program = next(item for item in catalog["programs"] if item["program_id"] == program_id)
+    area = next(item for item in catalog["areas"] if item["area_id"] == program["area_id"])
     semester_data = catalog["semesters"][str(semester)]
-    case_variant = program["case"]
+    scenario = program["scenario"]
     result = deepcopy(load_demo_case())
     result.update({
-        "case_id": f"{case_variant['case_id_base']}-S{semester}",
-        "case_version": f"{case_variant['version']}-S{semester}",
+        "case_id": f"CASO-{program_id.upper().replace('_', '-')}-S{semester}",
+        "case_version": f"{catalog['catalog_version']}:{program_id}:S{semester}",
         "course": program["label"],
-        "title": case_variant["title"],
-        "context": case_variant["context"],
-        "central_question": case_variant["central_question"],
-        "facts": [*case_variant["facts"], semester_data["additional_fact"]],
+        "title": scenario["title"],
+        "context": scenario["context"],
+        "central_question": scenario["central_question"],
+        "facts": [scenario["specific_fact"], *area["common_facts"], semester_data["additional_fact"]],
         "analysis_focus": semester_data["analysis_focus"],
         "academic_profile": profile,
     })
     result["verification"] = deepcopy(result["verification"])
-    result["verification"]["claim"] = case_variant["verification_claim"]
+    result["verification"]["claim"] = scenario.get("verification_claim", area["verification_claim"])
     return result
 
 

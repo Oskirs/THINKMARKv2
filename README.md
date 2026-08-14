@@ -41,7 +41,8 @@ diseño responsive y lenguaje claro para estudiantes de licenciatura.
 - Columnas y acciones que se acomodan verticalmente en pantallas de celular.
 - Política versionada de lenguaje claro y glosario breve dentro del recorrido estudiantil.
 - Guía de accesibilidad y redacción para validar nuevos casos antes de publicarlos.
-- Menús de carrera y semestre en E01, con siete contextos disciplinares iniciales.
+- Menús jerárquicos de escuela, carrera y semestre en E01.
+- Catálogo presencial UAG Guadalajara con 41 programas, una opción transversal y 126 variantes para 1.º, 5.º y 7.º.
 - Caso y nivel de complejidad fijados con la sesión para conservar trazabilidad al reingresar.
 
 ## Ejecutar localmente
@@ -163,9 +164,10 @@ La implementación y la lista de verificación están documentadas en
 16 px en celular, las acciones se apilan y el vocabulario esencial se explica en el momento en
 que se utiliza. La dificultad permanece en el análisis, no en descifrar las instrucciones.
 
-## Carrera, semestre y adaptación del caso del paso 6.8.2
+## Catálogo UAG y adaptación por semestre del paso 6.8.3
 
-La operación y ampliación del catálogo están documentadas en `GUIA_TRANSVERSALIDAD_CASOS.md`.
-E01 exige seleccionar un perfil académico antes de crear la sesión; E02 muestra el contexto
-asignado. Las variantes de 5.º y 7.º semestre cambian la complejidad del caso, pero conservan las
-mismas cuatro dimensiones de Reasoning Delta para todos los perfiles.
+La implementación está documentada en `GUIA_CATALOGO_UAG_SEMESTRES.md`. E01 exige seleccionar
+escuela, carrera y semestre antes de crear la sesión; E02 muestra el contexto asignado. Las
+variantes de 1.º, 5.º y 7.º cambian la complejidad del caso, pero conservan las mismas cuatro
+dimensiones de Reasoning Delta para todos los perfiles. `GUIA_TRANSVERSALIDAD_CASOS.md` conserva
+el antecedente funcional del paso 6.8.2.

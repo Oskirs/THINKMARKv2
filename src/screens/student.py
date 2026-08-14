@@ -10,6 +10,7 @@ from src.ai.coach import load_coach_config
 from src.domain.baseline import MIN_RESPONSE_CHARS, validate_baseline, validate_participant_code
 from src.domain.thinkmark import THINKMARK_FIELDS, THINKMARK_LABELS
 from src.services.academic_cases import (
+    area_options,
     build_academic_profile,
     build_case_for_profile,
     program_options,
@@ -68,7 +69,8 @@ def render_e01(data: dict[str, Any]) -> None:
             st.success("Consentimiento registrado y sesión activa.")
             profile = st.session_state.academic_profile
             st.markdown(
-                f"**Carrera o área:** {profile.get('program_label', 'Caso transversal')}  \n"
+                f"**Escuela o área:** {profile.get('area', 'Transversal')}  \n"
+                f"**Carrera:** {profile.get('program_label', 'Caso transversal')}  \n"
                 f"**Semestre:** {profile.get('semester_label', 'No registrado')}  \n"
                 f"**Nivel del caso:** {profile.get('complexity_label', 'General')}"
             )
@@ -84,23 +86,36 @@ def render_e01(data: dict[str, Any]) -> None:
                 "Elige el perfil que corresponde a esta actividad. La lista es un catálogo piloto editable; "
                 "si tu carrera no aparece, selecciona el caso transversal."
             )
+            areas = area_options()
+            area_label = st.selectbox(
+                "Escuela o área académica",
+                list(areas),
+                index=None,
+                placeholder="Selecciona tu escuela o área",
+                help="La carrera se mostrará después de seleccionar esta opción.",
+                key="academic_area_widget",
+            )
+            area_id = areas.get(area_label or "")
+            programs = program_options(area_id) if area_id else {}
+            program_label = st.selectbox(
+                "Carrera o programa académico",
+                list(programs),
+                index=None,
+                placeholder="Selecciona tu carrera" if area_id else "Primero selecciona tu escuela o área",
+                help="Esta selección adapta el contexto del caso; no cambia la rúbrica.",
+                disabled=not area_id,
+                key=f"academic_program_widget_{area_id or 'none'}",
+            )
+            semesters = semester_options()
+            semester_label = st.selectbox(
+                "Semestre",
+                list(semesters),
+                index=None,
+                placeholder="Selecciona tu semestre",
+                help="El piloto incluye casos para 1.º, 5.º y 7.º semestre.",
+                key="academic_semester_widget",
+            )
             with st.form("access_form", clear_on_submit=False):
-                programs = program_options()
-                semesters = semester_options()
-                program_label = st.selectbox(
-                    "Carrera o programa académico",
-                    list(programs),
-                    index=None,
-                    placeholder="Selecciona tu carrera",
-                    help="Esta selección adapta el contexto del caso; no cambia la rúbrica.",
-                )
-                semester_label = st.selectbox(
-                    "Semestre",
-                    list(semesters),
-                    index=None,
-                    placeholder="Selecciona tu semestre",
-                    help="El piloto incluye casos para 5.º y 7.º semestre.",
-                )
                 st.caption("Usa únicamente el código entregado por el facilitador. No escribas nombre, matrícula, grupo ni correo.")
                 participant_code = st.text_input("Código de participante", placeholder="Ejemplo: TM-DEMO-024", max_chars=20)
                 voluntary = st.checkbox("Mi participación en esta prueba es voluntaria.")

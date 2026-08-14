@@ -1,7 +1,19 @@
 {
-  "catalog_version": "THINKMARK-academic-cases-demo-v1",
-  "catalog_note": "Catálogo piloto editable; no representa la oferta académica oficial completa de la UAG.",
+  "catalog_version": "THINKMARK-UAG-GDL-v2",
+  "catalog_note": "Catálogo piloto basado en la oferta profesional presencial de Guadalajara publicada por la UAG; se conserva una opción transversal.",
+  "source": {
+    "url": "https://www.uag.mx/es/profesional",
+    "checked_at": "2026-08-14",
+    "campus_scope": "Guadalajara",
+    "maintenance_note": "Verificar la oferta oficial antes de cada nuevo ciclo o piloto."
+  },
   "semesters": {
+    "1": {
+      "label": "1.er semestre",
+      "complexity_label": "Exploración introductoria",
+      "analysis_focus": "Reconoce quiénes participan, distingue un dato de una opinión y explica una decisión inicial con una razón sencilla.",
+      "additional_fact": "El equipo explicará los conceptos técnicos antes de la actividad y permitirá formular preguntas básicas."
+    },
     "5": {
       "label": "5.º semestre",
       "complexity_label": "Aplicación guiada",
@@ -12,135 +24,108 @@
       "label": "7.º semestre",
       "complexity_label": "Decisión con restricciones",
       "analysis_focus": "Compara evidencia que puede entrar en tensión, anticipa efectos para distintos grupos y justifica qué costo aceptarías.",
-      "additional_fact": "Dos áreas interesadas interpretan de manera distinta los resultados iniciales y el presupuesto sólo permite aplicar una salvaguarda adicional."
+      "additional_fact": "Dos áreas interpretan de manera distinta los resultados y el presupuesto sólo permite una salvaguarda adicional."
     }
   },
-  "programs": [
+  "areas": [
     {
-      "program_id": "transversal",
+      "area_id": "transversal",
       "label": "Caso transversal / otra carrera",
-      "area": "Formación transversal",
-      "case": {
-        "case_id_base": "CASO-TRANSVERSAL-IA-01",
-        "version": "v1",
-        "title": "Uso responsable de IA para orientar la permanencia estudiantil",
-        "context": "Una universidad analiza adoptar un sistema que combina actividad académica, asistencia y uso de plataformas para sugerir intervenciones tempranas. El equipo debe valorar beneficios, límites, evidencia y salvaguardas antes de decidir.",
-        "central_question": "¿Debe la universidad utilizar un sistema de IA para identificar estudiantes que podrían necesitar apoyo académico?",
-        "facts": [
-          "El sistema produciría alertas para revisión humana; no tomaría decisiones automáticas.",
-          "Los datos disponibles tienen diferencias de cobertura entre programas.",
-          "La participación durante el piloto sería voluntaria."
-        ],
-        "verification_claim": "Las alertas tempranas siempre mejoran la permanencia estudiantil."
-      }
+      "common_facts": ["La recomendación sería revisada por una persona antes de actuar.", "Los datos disponibles no representan de la misma manera a todos los grupos."],
+      "verification_claim": "Una recomendación de IA con buena precisión general siempre produce una decisión justa."
     },
     {
-      "program_id": "administracion",
-      "label": "Administración y Negocios",
-      "area": "Negocios",
-      "case": {
-        "case_id_base": "CASO-ADM-IA-01",
-        "version": "v1",
-        "title": "IA para priorizar apoyo a sucursales",
-        "context": "Una empresa analiza un sistema que combina ventas, rotación, ausentismo y satisfacción del cliente para señalar sucursales que podrían necesitar apoyo. La dirección debe decidir si realiza un piloto sin convertir la alerta en una sanción automática.",
-        "central_question": "¿Debe la empresa utilizar el sistema para priorizar apoyo y recursos entre sus sucursales?",
-        "facts": [
-          "Las sucursales atienden mercados y volúmenes de clientes diferentes.",
-          "La alerta sería revisada por un comité antes de asignar recursos.",
-          "El proveedor reporta precisión general, pero no resultados por región."
-        ],
-        "verification_claim": "Una predicción más precisa siempre produce mejores decisiones de gestión."
-      }
+      "area_id": "salud",
+      "label": "Escuela de Medicina y Ciencias de la Salud",
+      "common_facts": ["El sistema no sustituye una valoración profesional ni toma decisiones clínicas por sí solo.", "Algunos historiales tienen información incompleta por diferencias de acceso y seguimiento."],
+      "verification_claim": "Una herramienta con alta precisión general es igualmente segura para todos los grupos."
     },
     {
-      "program_id": "derecho",
-      "label": "Derecho",
-      "area": "Ciencias sociales",
-      "case": {
-        "case_id_base": "CASO-DER-IA-01",
-        "version": "v1",
-        "title": "IA para priorizar la revisión de expedientes",
-        "context": "Una institución pública considera un sistema que ordena expedientes según urgencia estimada. El personal jurídico conservaría la decisión final, pero una prioridad baja podría retrasar la revisión de un caso.",
-        "central_question": "¿Debe utilizarse el sistema de IA para definir el orden inicial de revisión de expedientes?",
-        "facts": [
-          "El modelo fue entrenado con resoluciones históricas de cinco años.",
-          "Las personas responsables pueden cambiar la prioridad si documentan la razón.",
-          "No existe todavía una revisión de diferencias entre tipos de solicitantes."
-        ],
-        "verification_claim": "Usar decisiones históricas garantiza una priorización jurídica neutral."
-      }
+      "area_id": "negocios",
+      "label": "UAG Business School",
+      "common_facts": ["La recomendación sería revisada por una persona responsable antes de asignar recursos.", "El proveedor informa resultados generales, pero no explica diferencias entre mercados o grupos."],
+      "verification_claim": "Una predicción más precisa siempre produce una mejor decisión de negocio."
     },
     {
-      "program_id": "ingenieria_software",
-      "label": "Ingeniería de Software y Sistemas",
-      "area": "Ingeniería",
-      "case": {
-        "case_id_base": "CASO-ING-IA-01",
-        "version": "v1",
-        "title": "IA para priorizar riesgos en una entrega de software",
-        "context": "Un equipo de desarrollo evalúa un sistema que combina cambios de código, cobertura de pruebas e incidentes previos para señalar módulos con mayor riesgo antes de una entrega importante.",
-        "central_question": "¿Debe el equipo usar la recomendación de IA para decidir qué módulos revisar primero?",
-        "facts": [
-          "Dos módulos nuevos tienen poca historia y amplia revisión humana.",
-          "El sistema explica qué variables influyeron en cada alerta.",
-          "Revisar todos los módulos con la misma profundidad retrasaría la entrega."
-        ],
-        "verification_claim": "Los módulos con menos cobertura de pruebas son siempre los que causarán más incidentes."
-      }
+      "area_id": "ingenierias_agroindustria",
+      "label": "Escuela de Ingenierías y Agroindustria",
+      "common_facts": ["El equipo técnico puede revisar las variables que influyen en cada recomendación.", "Probar todas las alternativas con la misma profundidad retrasaría el proyecto."],
+      "verification_claim": "La alternativa con mejor desempeño promedio siempre es la opción técnica más segura."
     },
     {
-      "program_id": "mercadotecnia",
-      "label": "Mercadotecnia y Comunicación",
-      "area": "Comunicación y mercados",
-      "case": {
-        "case_id_base": "CASO-MKT-IA-01",
-        "version": "v1",
-        "title": "IA para personalizar una campaña digital",
-        "context": "Una organización planea utilizar comportamiento de navegación y compras anteriores para adaptar mensajes de una campaña. El equipo debe valorar efectividad, consentimiento, sesgos de segmentación y reputación.",
-        "central_question": "¿Debe lanzarse la campaña utilizando los segmentos propuestos por la IA?",
-        "facts": [
-          "Las personas pueden rechazar la personalización desde el aviso de privacidad.",
-          "Un segmento pequeño recibe mensajes distintos sin conocer el criterio usado.",
-          "La prueba inicial aumentó la interacción, pero no midió confianza en la marca."
-        ],
-        "verification_claim": "Una mayor tasa de interacción demuestra que la personalización beneficia al público."
-      }
+      "area_id": "arquitectura_ambientes",
+      "label": "Escuela de Arquitectura y Ambientes Construidos",
+      "common_facts": ["La propuesta deberá cumplir normas aplicables y ser revisada por profesionales responsables.", "El modelo optimiza variables cuantificables, pero no representa por completo la experiencia de quienes usarán el espacio."],
+      "verification_claim": "La solución con mayor eficiencia calculada es siempre la mejor para las personas usuarias."
     },
     {
-      "program_id": "medicina",
-      "label": "Medicina y Ciencias de la Salud",
-      "area": "Salud",
-      "case": {
-        "case_id_base": "CASO-SAL-IA-01",
-        "version": "v1",
-        "title": "Apoyo de IA para priorizar seguimiento clínico",
-        "context": "Una clínica estudia un sistema de apoyo que combina antecedentes, citas y resultados recientes para sugerir qué pacientes podrían requerir seguimiento temprano. El personal clínico mantendría toda decisión asistencial.",
-        "central_question": "¿Debe la clínica realizar un piloto del sistema para organizar el seguimiento, sin delegar decisiones clínicas?",
-        "facts": [
-          "El sistema no sustituye valoración, diagnóstico ni tratamiento profesional.",
-          "Algunos grupos tienen historiales incompletos por barreras de acceso.",
-          "El piloto exige consentimiento y revisión del comité correspondiente."
-        ],
-        "verification_claim": "Una alerta clínica con alta precisión general es igualmente segura para todos los grupos."
-      }
+      "area_id": "derecho_humanidades",
+      "label": "Escuela de Derecho y Humanidades",
+      "common_facts": ["La decisión final seguirá bajo responsabilidad humana y deberá documentarse.", "Los registros históricos pueden reflejar desigualdades o criterios que ya cambiaron."],
+      "verification_claim": "Usar decisiones históricas garantiza una recomendación neutral."
     },
     {
-      "program_id": "psicologia",
-      "label": "Psicología",
-      "area": "Ciencias de la conducta",
-      "case": {
-        "case_id_base": "CASO-PSI-IA-01",
-        "version": "v1",
-        "title": "IA para ofrecer orientación de bienestar",
-        "context": "Una universidad considera un sistema voluntario que combina un cuestionario breve y patrones generales de uso de la plataforma para invitar a estudiantes a conocer recursos de bienestar. No realizaría diagnósticos.",
-        "central_question": "¿Debe probarse el sistema para ofrecer orientación, manteniendo la decisión y el contacto bajo control humano?",
-        "facts": [
-          "La participación y el contacto posterior serían voluntarios.",
-          "El modelo no fue diseñado para diagnosticar condiciones de salud mental.",
-          "Los patrones de uso digital pueden tener explicaciones académicas o personales distintas."
-        ],
-        "verification_claim": "Una menor actividad digital indica necesariamente que una persona necesita apoyo psicológico."
-      }
+      "area_id": "industrias_creativas",
+      "label": "Escuela de Industrias Creativas",
+      "common_facts": ["El equipo creativo conserva la decisión final e identificará el material generado con apoyo de IA.", "La medición inicial valora interacción, pero no creatividad, representación ni confianza del público."],
+      "verification_claim": "El contenido que genera más interacción es siempre el más valioso para su audiencia."
+    },
+    {
+      "area_id": "datos_ia",
+      "label": "Escuela de Ciencia de Datos e Inteligencia Artificial",
+      "common_facts": ["El prototipo permite revisar métricas y registrar cambios antes de una liberación.", "El desempeño promedio puede ocultar errores importantes en subgrupos o situaciones poco frecuentes."],
+      "verification_claim": "Un modelo con la mejor métrica promedio está listo para utilizarse en cualquier contexto."
     }
+  ],
+  "programs": [
+    {"program_id":"transversal","label":"Otra carrera / caso transversal","area_id":"transversal","scenario":{"title":"Uso responsable de IA para orientar la permanencia estudiantil","context":"Una universidad analiza un sistema que combina actividad académica, asistencia y uso de plataformas para sugerir intervenciones tempranas.","central_question":"¿Debe la universidad utilizar el sistema para identificar estudiantes que podrían necesitar apoyo académico?","specific_fact":"La participación durante el piloto sería voluntaria."}},
+
+    {"program_id":"medico_cirujano","label":"Médico Cirujano","area_id":"salud","scenario":{"title":"IA para priorizar seguimiento clínico","context":"Una clínica estudia una herramienta que combina antecedentes, citas y resultados para sugerir qué pacientes podrían requerir seguimiento temprano.","central_question":"¿Debe realizarse un piloto para organizar el seguimiento clínico?","specific_fact":"El piloto requiere consentimiento y revisión del comité correspondiente."}},
+    {"program_id":"ciencias_nutricion","label":"Ciencias de la Nutrición","area_id":"salud","scenario":{"title":"IA para apoyar recomendaciones de alimentación","context":"Un servicio universitario evalúa una herramienta que propone orientaciones alimentarias a partir de objetivos, hábitos y datos generales de salud.","central_question":"¿Debe utilizarse como apoyo para preparar orientaciones alimentarias personalizadas?","specific_fact":"La base representa poco algunas prácticas culturales y condiciones económicas."}},
+    {"program_id":"cirujano_dentista","label":"Cirujano Dentista","area_id":"salud","scenario":{"title":"IA para apoyar la revisión de imágenes dentales","context":"Una clínica dental analiza un sistema que señala zonas en imágenes para que el profesional decida cuáles revisar con mayor atención.","central_question":"¿Debe probarse como apoyo para priorizar la revisión de imágenes dentales?","specific_fact":"Fue evaluado con equipos de imagen distintos a algunos utilizados por la clínica."}},
+    {"program_id":"enfermeria","label":"Enfermería","area_id":"salud","scenario":{"title":"IA para organizar seguimiento de cuidados","context":"Un equipo de enfermería considera una herramienta que combina observaciones y registros para sugerir quién podría requerir seguimiento adicional.","central_question":"¿Debe usar las alertas para organizar el seguimiento de cuidados?","specific_fact":"La carga de documentación cambia entre turnos y servicios."}},
+    {"program_id":"medicina_veterinaria_zootecnia","label":"Medicina Veterinaria y Zootecnia","area_id":"salud","scenario":{"title":"IA para detectar señales de bienestar animal","context":"Una unidad de producción evalúa sensores y un modelo que señalan cambios de comportamiento para orientar una revisión veterinaria.","central_question":"¿Debe realizarse un piloto para priorizar revisiones de bienestar animal?","specific_fact":"El comportamiento esperado cambia según especie, edad y ambiente."}},
+    {"program_id":"psicologia","label":"Psicología","area_id":"salud","scenario":{"title":"IA para ofrecer orientación de bienestar","context":"Una universidad considera una herramienta voluntaria que combina un cuestionario y patrones generales de plataforma para invitar a conocer recursos de bienestar; no diagnosticaría.","central_question":"¿Debe probarse para ofrecer orientación bajo control humano?","specific_fact":"Los patrones digitales pueden tener explicaciones académicas o personales distintas."}},
+    {"program_id":"terapia_fisica","label":"Terapia Física","area_id":"salud","scenario":{"title":"IA para apoyar el seguimiento de rehabilitación","context":"Una clínica evalúa una aplicación que analiza registros de ejercicios para sugerir cuándo revisar un plan de rehabilitación.","central_question":"¿Debe utilizarse para priorizar revisiones del plan?","specific_fact":"La aplicación no observa dolor, contexto doméstico ni calidad completa del movimiento."}},
+
+    {"program_id":"administracion_financiera","label":"Administración Financiera","area_id":"negocios","scenario":{"title":"IA para priorizar decisiones de financiamiento","context":"Una organización evalúa un modelo que proyecta liquidez y riesgo para ordenar alternativas de financiamiento.","central_question":"¿Debe utilizar la recomendación para priorizar una alternativa?","specific_fact":"Las proyecciones dependen de tasas y escenarios que pueden cambiar rápidamente."}},
+    {"program_id":"administracion_empresas","label":"Administración de Empresas","area_id":"negocios","scenario":{"title":"IA para priorizar apoyo a sucursales","context":"Una empresa analiza un sistema que combina ventas, rotación y satisfacción para señalar sucursales que podrían necesitar apoyo.","central_question":"¿Debe utilizarlo para priorizar apoyo y recursos entre sucursales?","specific_fact":"Las sucursales atienden mercados y volúmenes diferentes."}},
+    {"program_id":"comercio_internacional","label":"Comercio Internacional","area_id":"negocios","scenario":{"title":"IA para seleccionar un mercado de exportación","context":"Una empresa evalúa un sistema que ordena mercados según demanda, costos logísticos y riesgo regulatorio.","central_question":"¿Debe elegir el mercado mejor clasificado para una prueba de exportación?","specific_fact":"Las fuentes comerciales se actualizan con distinta frecuencia."}},
+    {"program_id":"contador_publico","label":"Contador Público","area_id":"negocios","scenario":{"title":"IA para priorizar operaciones en una auditoría","context":"Un equipo contable considera una herramienta que señala operaciones atípicas para organizar una revisión.","central_question":"¿Debe usar las alertas para decidir qué operaciones revisar primero?","specific_fact":"Una operación poco frecuente no representa necesariamente un incumplimiento."}},
+    {"program_id":"economia_gestion_negocios","label":"Economía y Gestión de Negocios","area_id":"negocios","scenario":{"title":"IA para orientar una decisión de expansión","context":"Una organización analiza un modelo que proyecta demanda, empleo y competencia para recomendar dónde expandir operaciones.","central_question":"¿Debe iniciar la expansión en la región recomendada?","specific_fact":"La proyección no incorpora todavía un cambio regulatorio anunciado."}},
+    {"program_id":"mercadotecnia","label":"Mercadotecnia","area_id":"negocios","scenario":{"title":"IA para personalizar una campaña digital","context":"Una organización planea usar navegación y compras anteriores para adaptar mensajes de una campaña.","central_question":"¿Debe lanzar la campaña con los segmentos propuestos por la IA?","specific_fact":"La prueba aumentó interacción, pero no midió confianza en la marca."}},
+    {"program_id":"negocios_gastronomicos","label":"Negocios Gastronómicos","area_id":"negocios","scenario":{"title":"IA para reducir desperdicio gastronómico","context":"Un restaurante evalúa un sistema que pronostica demanda para recomendar compras y producción diaria.","central_question":"¿Debe seguir la recomendación para ajustar compras y producción?","specific_fact":"Eventos locales y clima no siempre aparecen en los datos históricos."}},
+    {"program_id":"negocios_internacionales","label":"Negocios Internacionales","area_id":"negocios","scenario":{"title":"IA para seleccionar un socio internacional","context":"Una empresa usa un sistema que compara costos, estabilidad, desempeño y cumplimiento para ordenar posibles socios.","central_question":"¿Debe negociar primero con el socio mejor clasificado?","specific_fact":"Parte de la información reputacional proviene de fuentes no verificadas."}},
+    {"program_id":"negocios_turisticos","label":"Negocios Turísticos","area_id":"negocios","scenario":{"title":"IA para gestionar demanda turística","context":"Un destino evalúa un sistema que proyecta afluencia para recomendar precios, personal y promoción.","central_question":"¿Debe aplicar las recomendaciones durante una temporada piloto?","specific_fact":"La proyección de ingresos no mide presión sobre servicios locales ni experiencia comunitaria."}},
+
+    {"program_id":"ingeniero_quimico","label":"Ingeniero Químico","area_id":"ingenierias_agroindustria","scenario":{"title":"IA para ajustar un proceso químico","context":"Una planta evalúa un modelo que recomienda parámetros de operación para mejorar rendimiento y reducir consumo.","central_question":"¿Debe probar los parámetros en una corrida controlada?","specific_fact":"La recomendación no cubre todas las condiciones de arranque."}},
+    {"program_id":"ingenieria_empresarial_agropecuaria","label":"Ingeniería Empresarial Agropecuaria","area_id":"ingenierias_agroindustria","scenario":{"title":"IA para priorizar recursos agropecuarios","context":"Una unidad productiva analiza un sistema que combina clima, suelo y costos para recomendar dónde asignar recursos.","central_question":"¿Debe usar la recomendación para el siguiente ciclo?","specific_fact":"Los pequeños productores aportaron menos datos que las unidades de gran escala."}},
+    {"program_id":"ingenieria_industrial","label":"Ingeniería Industrial","area_id":"ingenierias_agroindustria","scenario":{"title":"IA para priorizar mejoras de producción","context":"Una planta evalúa un sistema que combina tiempos, calidad e incidentes para sugerir qué proceso mejorar primero.","central_question":"¿Debe intervenir primero el proceso señalado?","specific_fact":"La línea con más alertas también produce la mayor variedad de productos."}},
+    {"program_id":"ingenieria_innovacion_gestion_empresarial","label":"Ingeniería en Innovación y Gestión Empresarial","area_id":"ingenierias_agroindustria","scenario":{"title":"IA para priorizar proyectos de innovación","context":"Una organización usa un sistema que compara viabilidad, impacto y riesgo para ordenar propuestas de innovación.","central_question":"¿Debe financiar primero el proyecto mejor clasificado?","specific_fact":"Las propuestas nuevas tienen menos datos históricos que las mejoras incrementales."}},
+    {"program_id":"ingenieria_tecnologias_automotrices","label":"Ingeniería en Tecnologías Automotrices","area_id":"ingenierias_agroindustria","scenario":{"title":"IA para priorizar fallas en un prototipo automotriz","context":"Un equipo combina sensores, pruebas y mantenimiento para señalar componentes con mayor riesgo de falla.","central_question":"¿Debe usar la recomendación para decidir qué componentes revisar primero?","specific_fact":"El prototipo incorpora componentes nuevos con poca historia de operación."}},
+    {"program_id":"ingenieria_alimentos_negocios","label":"Ingeniería en Alimentos y Negocios","area_id":"ingenierias_agroindustria","scenario":{"title":"IA para ajustar producción de alimentos","context":"Una empresa combina pruebas de calidad, almacenamiento y demanda para recomendar producción y distribución.","central_question":"¿Debe aplicar la recomendación en un lote piloto?","specific_fact":"Los datos provienen de condiciones de almacenamiento controladas."}},
+    {"program_id":"ingenieria_biotecnologia","label":"Ingeniería en Biotecnología","area_id":"ingenierias_agroindustria","scenario":{"title":"IA para seleccionar condiciones de un experimento","context":"Un laboratorio evalúa un modelo que propone condiciones para priorizar experimentos con mayor probabilidad de resultado útil.","central_question":"¿Debe comenzar con las condiciones sugeridas?","specific_fact":"Los experimentos previos usan muestras y escalas diferentes."}},
+    {"program_id":"ingenieria_electronica_biomedica","label":"Ingeniería en Electrónica Biomédica","area_id":"ingenierias_agroindustria","scenario":{"title":"IA para detectar anomalías en equipo biomédico","context":"Un hospital combina registros de uso y sensores para señalar equipos que podrían requerir revisión técnica.","central_question":"¿Debe usar las alertas para priorizar mantenimiento?","specific_fact":"Equipos del mismo tipo operan con cargas y entornos distintos."}},
+    {"program_id":"ingenieria_mecatronica","label":"Ingeniería en Mecatrónica","area_id":"ingenierias_agroindustria","scenario":{"title":"IA para mantenimiento de una celda automatizada","context":"Una planta evalúa sensores y un modelo que predicen fallas para recomendar cuándo detener una celda automatizada.","central_question":"¿Debe programarse mantenimiento con base en la recomendación?","specific_fact":"Una detención reduce producción, pero una falla puede afectar seguridad y calidad."}},
+    {"program_id":"quimico_farmaceutico_biologo","label":"Químico Farmacéutico Biólogo","area_id":"ingenierias_agroindustria","scenario":{"title":"IA para priorizar control de calidad","context":"Un laboratorio considera una herramienta que señala resultados atípicos para organizar verificaciones de calidad.","central_question":"¿Debe priorizar verificaciones según las alertas?","specific_fact":"Cambios de lote y equipo pueden producir variaciones sin representar una falla."}},
+
+    {"program_id":"arquitectura","label":"Arquitectura","area_id":"arquitectura_ambientes","scenario":{"title":"IA para comparar alternativas arquitectónicas","context":"Un despacho evalúa una herramienta generativa que propone distribuciones para mejorar energía, costo y uso del espacio.","central_question":"¿Debe seleccionar una propuesta como base del anteproyecto?","specific_fact":"La herramienta no incorpora todavía entrevistas con la comunidad usuaria."}},
+    {"program_id":"diseno_industrial","label":"Diseño Industrial","area_id":"arquitectura_ambientes","scenario":{"title":"IA para generar alternativas de producto","context":"Un equipo usa una herramienta que propone formas y materiales para reducir peso, costo e impacto ambiental.","central_question":"¿Debe desarrollar el concepto mejor evaluado?","specific_fact":"Las simulaciones no incluyen pruebas de uso con personas diversas."}},
+    {"program_id":"diseno_interiores_paisajismo","label":"Diseño de Interiores y Paisajismo","area_id":"arquitectura_ambientes","scenario":{"title":"IA para proponer un espacio interior y paisajístico","context":"Un estudio genera alternativas según iluminación, circulación, vegetación, costo y mantenimiento.","central_question":"¿Debe usar la propuesta mejor puntuada como base?","specific_fact":"Las preferencias se obtuvieron de una muestra pequeña."}},
+    {"program_id":"ingenieria_civil","label":"Ingeniería Civil","area_id":"arquitectura_ambientes","scenario":{"title":"IA para priorizar inspecciones de infraestructura","context":"Un municipio combina edad, carga e incidentes para ordenar inspecciones de infraestructura.","central_question":"¿Debe seguir el orden sugerido por el modelo?","specific_fact":"Algunas estructuras tienen registros de mantenimiento incompletos."}},
+
+    {"program_id":"derecho","label":"Derecho","area_id":"derecho_humanidades","scenario":{"title":"IA para priorizar la revisión de expedientes","context":"Una institución pública considera un sistema que ordena expedientes por urgencia estimada; una prioridad baja podría retrasar la revisión.","central_question":"¿Debe utilizarse para definir el orden inicial de revisión?","specific_fact":"No se han revisado diferencias entre tipos de solicitantes."}},
+    {"program_id":"relaciones_internacionales","label":"Relaciones Internacionales","area_id":"derecho_humanidades","scenario":{"title":"IA para anticipar riesgos en cooperación internacional","context":"Una organización combina indicadores y noticias para priorizar regiones en una estrategia de cooperación.","central_question":"¿Debe orientar recursos hacia las regiones señaladas?","specific_fact":"La cobertura informativa es desigual y algunas fuentes provienen de traducciones automáticas."}},
+
+    {"program_id":"comunicacion_audiencias_digitales","label":"Comunicación para Audiencias Digitales","area_id":"industrias_creativas","scenario":{"title":"IA para adaptar mensajes a audiencias digitales","context":"Un medio evalúa una herramienta que recomienda temas, formatos y horarios según comportamiento de audiencia.","central_question":"¿Debe seguir la recomendación para una campaña informativa?","specific_fact":"Los datos describen interacción, pero no comprensión ni calidad informativa."}},
+    {"program_id":"videojuegos_entornos_virtuales","label":"Creación de Videojuegos y Entornos Virtuales","area_id":"industrias_creativas","scenario":{"title":"IA para generar contenido de un entorno virtual","context":"Un estudio prueba una herramienta que genera personajes, escenarios y diálogos para acelerar un prototipo.","central_question":"¿Debe integrar el contenido en la siguiente versión?","specific_fact":"El material de entrenamiento y sus licencias no están claramente documentados."}},
+    {"program_id":"diseno_grafico_estrategico","label":"Diseño Gráfico Estratégico","area_id":"industrias_creativas","scenario":{"title":"IA para desarrollar una identidad visual","context":"Un equipo evalúa propuestas generadas por IA para definir la dirección inicial de una identidad visual.","central_question":"¿Debe presentar la propuesta mejor evaluada como base?","specific_fact":"La evaluación automática prioriza semejanza con tendencias actuales."}},
+    {"program_id":"negocios_moda_imagen","label":"Negocios de la Moda e Imagen","area_id":"industrias_creativas","scenario":{"title":"IA para pronosticar una colección de moda","context":"Una marca recomienda estilos y volúmenes según tendencias, ventas y actividad digital.","central_question":"¿Debe producir la colección recomendada?","specific_fact":"La recomendación no evalúa condiciones de producción."}},
+    {"program_id":"produccion_audiovisual","label":"Producción Audiovisual","area_id":"industrias_creativas","scenario":{"title":"IA para apoyar una producción audiovisual","context":"Un equipo considera herramientas generativas para guion gráfico, voces temporales y previsualización.","central_question":"¿Debe usar estos materiales para decidir la dirección creativa?","specific_fact":"El ahorro no incluye revisión de derechos, créditos y representación."}},
+
+    {"program_id":"actuaria_ciencia_datos","label":"Actuaría y Ciencia de Datos","area_id":"datos_ia","scenario":{"title":"Modelo predictivo para estimar riesgo","context":"Un equipo desarrolla un modelo que estima riesgo para orientar una asignación de recursos.","central_question":"¿Debe utilizarse en un piloto de decisión real?","specific_fact":"La calibración cambia entre grupos con tamaños de muestra diferentes."}},
+    {"program_id":"ciencia_datos","label":"Ciencia de Datos","area_id":"datos_ia","scenario":{"title":"Modelo para priorizar intervenciones con datos","context":"Un equipo compara modelos para ordenar casos que recibirían una intervención limitada.","central_question":"¿Debe liberar el modelo con mejor desempeño promedio?","specific_fact":"Dos modelos intercambian precisión general por menor diferencia de error entre grupos."}},
+    {"program_id":"ingenieria_software_mineria_datos","label":"Ingeniería de Software y Minería de Datos","area_id":"datos_ia","scenario":{"title":"IA para priorizar riesgos en una entrega de software","context":"Un equipo combina cambios de código, pruebas e incidentes para señalar módulos con mayor riesgo.","central_question":"¿Debe usar la recomendación para decidir qué módulos revisar primero?","specific_fact":"Dos módulos nuevos tienen poca historia y amplia revisión humana."}},
+    {"program_id":"ingenieria_inteligencia_artificial","label":"Ingeniería en Inteligencia Artificial","area_id":"datos_ia","scenario":{"title":"Decisión de liberación de un sistema de IA","context":"Un modelo supera la métrica general, pero presenta errores distintos entre grupos y situaciones poco frecuentes.","central_question":"¿Debe liberarse en un piloto con usuarios reales?","specific_fact":"Todavía no se define quién puede detenerlo ni cómo apelar una salida."}}
   ]
 }

@@ -50,8 +50,8 @@ def test_brand_text_contrast_exceeds_normal_text_requirement() -> None:
 
 def test_plain_language_policy_targets_undergraduates_and_defines_terms() -> None:
     config = load_language_config()
-    assert config["policy_version"] == "plain-language-undergraduate-v1"
-    assert "5.º y 7.º semestre" in config["audience"]
+    assert config["policy_version"] == "plain-language-undergraduate-v2"
+    assert "1.er, 5.º y 7.º semestre" in config["audience"]
     assert {"evidence", "assumption", "counterargument", "tradeoff", "uncertainty", "reasoning_delta", "thinkmark"}.issubset(config["terms"])
     assert all(item["plain"].strip() for item in config["terms"].values())
 

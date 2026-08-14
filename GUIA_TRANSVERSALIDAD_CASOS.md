@@ -1,5 +1,8 @@
 # Paso 6.8.2 — Selección de carrera, semestre y adaptación del caso
 
+> Este documento conserva el diseño inicial. El catálogo oficial jerárquico y la variante de
+> 1.er semestre se documentan en `GUIA_CATALOGO_UAG_SEMESTRES.md`.
+
 ## Resultado funcional
 
 La pantalla E01 incorpora dos menús obligatorios antes del código de participante:
