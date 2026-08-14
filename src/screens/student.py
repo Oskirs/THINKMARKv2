@@ -9,6 +9,13 @@ import streamlit as st
 from src.ai.coach import load_coach_config
 from src.domain.baseline import MIN_RESPONSE_CHARS, validate_baseline, validate_participant_code
 from src.domain.thinkmark import THINKMARK_FIELDS, THINKMARK_LABELS
+from src.services.academic_cases import (
+    build_academic_profile,
+    build_case_for_profile,
+    program_options,
+    semester_options,
+    validate_academic_selection,
+)
 from src.services.journey import (
     close_baseline,
     create_or_resume_session,
@@ -45,7 +52,11 @@ def _show_access_notice() -> None:
 
 
 def render_e01(data: dict[str, Any]) -> None:
-    screen_title("E01", "Inicio y acuerdos de participación", "Conoce la actividad, usa tu código y confirma las condiciones antes de comenzar.")
+    screen_title(
+        "E01",
+        "Perfil académico y acuerdos de participación",
+        "Selecciona tu carrera y semestre para recibir un caso cercano a tu formación.",
+    )
     if st.session_state.access_notice:
         st.info(st.session_state.pop("access_notice"))
 
@@ -55,6 +66,13 @@ def render_e01(data: dict[str, Any]) -> None:
         st.write("Analizarás un caso, conversarás con un Coach que sólo hace preguntas y revisarás tu ThinkMark antes de decidir si te representa.")
         if st.session_state.consent_status:
             st.success("Consentimiento registrado y sesión activa.")
+            profile = st.session_state.academic_profile
+            st.markdown(
+                f"**Carrera o área:** {profile.get('program_label', 'Caso transversal')}  \n"
+                f"**Semestre:** {profile.get('semester_label', 'No registrado')}  \n"
+                f"**Nivel del caso:** {profile.get('complexity_label', 'General')}"
+            )
+            st.caption("El perfil y el caso quedaron fijados para que tu recorrido sea comparable de principio a fin.")
             st.text_input("Código de participante", value=st.session_state.participant_id, disabled=True)
             accepted_at = st.session_state.consent_record.get("accepted_at", "")
             st.caption(f"Aceptación registrada: {accepted_at[:19].replace('T', ' ')} UTC")
@@ -62,8 +80,28 @@ def render_e01(data: dict[str, Any]) -> None:
                 go_to_screen("E02")
                 st.rerun()
         else:
-            st.caption("Usa únicamente el código entregado por el facilitador. No escribas nombre, matrícula ni correo.")
+            st.caption(
+                "Elige el perfil que corresponde a esta actividad. La lista es un catálogo piloto editable; "
+                "si tu carrera no aparece, selecciona el caso transversal."
+            )
             with st.form("access_form", clear_on_submit=False):
+                programs = program_options()
+                semesters = semester_options()
+                program_label = st.selectbox(
+                    "Carrera o programa académico",
+                    list(programs),
+                    index=None,
+                    placeholder="Selecciona tu carrera",
+                    help="Esta selección adapta el contexto del caso; no cambia la rúbrica.",
+                )
+                semester_label = st.selectbox(
+                    "Semestre",
+                    list(semesters),
+                    index=None,
+                    placeholder="Selecciona tu semestre",
+                    help="El piloto incluye casos para 5.º y 7.º semestre.",
+                )
+                st.caption("Usa únicamente el código entregado por el facilitador. No escribas nombre, matrícula, grupo ni correo.")
                 participant_code = st.text_input("Código de participante", placeholder="Ejemplo: TM-DEMO-024", max_chars=20)
                 voluntary = st.checkbox("Mi participación en esta prueba es voluntaria.")
                 non_graded = st.checkbox("Entiendo que esta actividad no asigna calificación.")
@@ -71,27 +109,48 @@ def render_e01(data: dict[str, Any]) -> None:
                 submitted = st.form_submit_button("Aceptar y comenzar", type="primary", use_container_width=True)
             if submitted:
                 normalized, code_error = validate_participant_code(participant_code)
-                if code_error:
-                    st.error(code_error)
-                elif not all((voluntary, non_graded, anonymized)):
-                    st.error("Para continuar debes confirmar las tres condiciones. Si no deseas participar, puedes cerrar esta página sin crear una sesión.")
+                program_id = programs.get(program_label or "")
+                semester = semesters.get(semester_label or "")
+                profile_errors = validate_academic_selection(program_id, semester)
+                if code_error or profile_errors or not all((voluntary, non_graded, anonymized)):
+                    st.error("Revisa la información antes de comenzar:")
+                    if code_error:
+                        st.markdown(f"- **Código de participante:** {code_error}")
+                    for message in profile_errors.values():
+                        st.markdown(f"- **Perfil académico:** {message}")
+                    if not all((voluntary, non_graded, anonymized)):
+                        st.markdown("- **Acuerdos:** confirma las tres condiciones para participar.")
                 else:
-                    resumed = create_or_resume_session(normalized)
+                    profile = build_academic_profile(program_id, semester)
+                    assigned_case = build_case_for_profile(program_id, semester)
+                    resumed = create_or_resume_session(normalized, profile, assigned_case)
                     go_to_screen(resume_screen_id() if resumed else "E02")
                     st.rerun()
     with col2:
         card("Duración estimada", "25–35 minutos")
         card("Privacidad", "La demostración no solicita nombre, matrícula ni correo.")
         card("Resultado", "Un resumen editable de tu razonamiento, llamado ThinkMark.")
-    st.caption("Las condiciones aceptadas quedan asociadas a las versiones vigentes del instrumento y del caso.")
+    st.caption(
+        "La selección académica adapta el contexto, pero todas las carreras trabajan las mismas cuatro "
+        "dimensiones del Reasoning Delta."
+    )
 
 
 def render_e02(data: dict[str, Any]) -> None:
     screen_title("E02", "Caso y primera respuesta", "Explica qué piensas antes de conversar con el AI Coach. Esta será tu referencia inicial.")
     if st.session_state.access_notice:
         st.info(st.session_state.pop("access_notice"))
+    profile = data.get("academic_profile") or st.session_state.academic_profile
+    if profile:
+        st.markdown(
+            f"<span class='tm-badge'>{profile.get('program_label', 'Caso transversal')} · "
+            f"{profile.get('semester_label', '')}</span>",
+            unsafe_allow_html=True,
+        )
     st.subheader(data["title"])
     st.write(data["context"])
+    if data.get("analysis_focus"):
+        st.info(f"**Enfoque para este semestre:** {data['analysis_focus']}")
     with st.expander("Datos disponibles en el caso", expanded=False):
         for fact in data["facts"]:
             st.markdown(f"- {fact}")

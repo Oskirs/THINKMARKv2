@@ -29,6 +29,13 @@ def render_v01(data: dict[str, Any]) -> None:
     if st.session_state.access_notice:
         st.info(st.session_state.pop("access_notice"))
     st.success("Vista autenticada y separada del recorrido estudiantil.")
+    profile = st.session_state.academic_profile
+    if profile:
+        st.caption(
+            f"Contexto del caso: {profile.get('program_label', 'Transversal')} · "
+            f"{profile.get('semester_label', 'semestre no registrado')}. "
+            "La rúbrica aplicada es la misma para todos los perfiles."
+        )
     st.info(
         "Reasoning Delta describe cambio observable en el razonamiento expresado. No mide inteligencia, "
         "personalidad ni pensamiento privado, y no demuestra causalidad."

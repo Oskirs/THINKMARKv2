@@ -28,7 +28,6 @@ from src.repositories.factory import get_session_repository
 
 
 INSTRUMENT_VERSION = "THINKMARK-v2"
-CASE_VERSION = "CASO-DEMO-01-v1"
 
 DEFAULT_STATE: dict[str, Any] = {
     "participant_id": "",
@@ -37,6 +36,8 @@ DEFAULT_STATE: dict[str, Any] = {
     "current_stage": 0,
     "consent_status": False,
     "consent_record": {},
+    "academic_profile": {},
+    "case_snapshot": {},
     "baseline_draft": {},
     "baseline_confidence": 3,
     "baseline_locked": False,
@@ -109,6 +110,8 @@ def _record_from_state() -> dict[str, Any]:
         "current_stage": st.session_state.current_stage,
         "consent_status": st.session_state.consent_status,
         "consent_record": st.session_state.consent_record,
+        "academic_profile": st.session_state.academic_profile,
+        "case_snapshot": st.session_state.case_snapshot,
         "baseline_draft": st.session_state.baseline_draft,
         "baseline_confidence": st.session_state.baseline_confidence,
         "baseline_locked": st.session_state.baseline_locked,
@@ -162,6 +165,7 @@ def _record_from_state() -> dict[str, Any]:
 def _hydrate(record: dict[str, Any]) -> None:
     for key in (
         "participant_id", "session_id", "current_stage", "consent_status", "consent_record",
+        "academic_profile", "case_snapshot",
         "baseline_draft", "baseline_confidence", "baseline_locked", "baseline_snapshot",
         "coach_simulation_completed", "coach_completed", "coach_bridge", "coach_turns",
         "coach_events", "ai_usage", "claim_to_verify",
@@ -235,7 +239,12 @@ def refresh_current_session(repository: SessionRepository | None = None) -> bool
     return True
 
 
-def create_or_resume_session(participant_id: str, repository: SessionRepository | None = None) -> bool:
+def create_or_resume_session(
+    participant_id: str,
+    academic_profile: dict[str, Any],
+    case_snapshot: dict[str, Any],
+    repository: SessionRepository | None = None,
+) -> bool:
     """Devuelve True si recuperó una sesión previa."""
     if st.session_state.access_role != "student":
         raise PermissionError("El código de participante sólo puede utilizarse en el acceso estudiantil.")
@@ -243,6 +252,18 @@ def create_or_resume_session(participant_id: str, repository: SessionRepository 
     previous = repository.get(participant_id)
     if previous:
         _hydrate(previous)
+        if not previous.get("academic_profile"):
+            # Compatibilidad: una sesión anterior ya cerrada conserva el caso transversal original.
+            if previous.get("baseline_locked"):
+                from src.services.academic_cases import legacy_academic_profile
+                from src.services.fixtures import load_demo_case
+
+                st.session_state.academic_profile = legacy_academic_profile()
+                st.session_state.case_snapshot = load_demo_case()
+            else:
+                st.session_state.academic_profile = academic_profile.copy()
+                st.session_state.case_snapshot = case_snapshot.copy()
+            repository.save(_record_from_state())
         st.session_state.access_notice = "Sesión recuperada. Puedes continuar desde el último punto guardado."
         return True
 
@@ -252,13 +273,16 @@ def create_or_resume_session(participant_id: str, repository: SessionRepository 
     st.session_state.current_stage = 1
     st.session_state.consent_status = True
     st.session_state.session_status = "in_progress"
+    st.session_state.academic_profile = academic_profile.copy()
+    st.session_state.case_snapshot = case_snapshot.copy()
     st.session_state.consent_record = {
         "accepted_at": accepted_at,
         "voluntary_participation": True,
         "non_graded_activity": True,
         "anonymized_use_authorized": True,
         "instrument_version": INSTRUMENT_VERSION,
-        "case_version": CASE_VERSION,
+        "case_version": case_snapshot.get("case_version", case_snapshot.get("case_id", "sin-versión")),
+        "academic_catalog_version": academic_profile.get("catalog_version", "sin-versión"),
     }
     repository.save(_record_from_state())
     st.session_state.access_notice = "Sesión creada. Tu código te permitirá recuperar este avance sin usar tu nombre."

@@ -28,7 +28,7 @@ class Screen:
 
 
 SCREENS: tuple[Screen, ...] = (
-    Screen("E01", "Inicio y acuerdos", "Recorrido del estudiante", 1, "src.screens.student:render_e01"),
+    Screen("E01", "Perfil académico y acuerdos", "Recorrido del estudiante", 1, "src.screens.student:render_e01"),
     Screen("E02", "Caso y primera respuesta", "Recorrido del estudiante", 2, "src.screens.student:render_e02"),
     Screen("E03", "AI Coach", "Recorrido del estudiante", 3, "src.screens.student:render_e03"),
     Screen("E04", "Verify", "Recorrido del estudiante", 4, "src.screens.student:render_e04"),

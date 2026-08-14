@@ -81,7 +81,8 @@ def render_review_queue() -> None:
         "Código de la sesión",
         list(by_code),
         format_func=lambda code: (
-            f"{code} · {by_code[code].get('session_status', 'sin estado')} · "
+            f"{code} · {by_code[code].get('academic_profile', {}).get('program_label', 'Transversal')} · "
+            f"{by_code[code].get('session_status', 'sin estado')} · "
             f"{'Delta validado' if by_code[code].get('reasoning_evaluation', {}).get('status') == 'validated' else 'por evaluar'}"
         ),
     )

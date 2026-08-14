@@ -91,9 +91,8 @@ Las pruebas automáticas verifican contraste mínimo, presencia del glosario, p�
 reglas responsive y ausencia de expresiones avanzadas no explicadas en las pantallas del
 estudiante.
 
-## Alcance y siguiente ajuste
+## Continuidad con el paso 6.8.2
 
-Este paso mejora la presentación y la comprensión del recorrido general. La selección de carrera
-y semestre y la adaptación automática del caso se implementarán como un módulo separado, usando
-esta política de lenguaje como requisito para todos los casos. Así se conserva la transversalidad
-sin modificar la rúbrica común de THINKMARK.
+La selección de carrera y semestre y la adaptación automática del caso ya están implementadas en
+el paso 6.8.2. Todos los casos del catálogo utilizan esta política de lenguaje y conservan la misma
+rúbrica común de THINKMARK.

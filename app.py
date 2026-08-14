@@ -7,7 +7,7 @@ import streamlit as st
 from src.navigation import get_screen, navigation_groups, screen_exists
 from src.infrastructure.settings import ConfigurationError, load_settings
 from src.screens.access import ROLE_LABELS, render_access_portal, render_review_queue
-from src.services.fixtures import load_demo_case
+from src.services.academic_cases import case_for_session
 from src.services.journey import allowed_screen_ids, ensure_journey_state, go_to_screen, reset_access_state, resolve_screen_access
 from src.ui.brand import apply_brand, render_brand_header
 from src.ui.layout import render_progress, render_sidebar
@@ -22,7 +22,7 @@ st.set_page_config(
 
 apply_brand()
 ensure_journey_state()
-demo_case = load_demo_case()
+demo_case = case_for_session(st.session_state)
 
 try:
     runtime_settings = load_settings()
@@ -34,7 +34,7 @@ except ConfigurationError as exc:
 if not st.session_state.access_role:
     render_brand_header()
     render_access_portal()
-    st.caption("Prototipo THINKMARK v2 · Paso 6.8.1 · Acceso separado, lenguaje claro y diseño móvil")
+    st.caption("Prototipo THINKMARK v2 · Paso 6.8.2 · Acceso separado y casos adaptados por perfil académico")
     st.stop()
 
 if st.session_state.access_role == "evaluator" and not st.session_state.internal_session_loaded:
@@ -74,6 +74,6 @@ screen = get_screen(st.session_state.current_screen)
 screen.renderer(demo_case)
 
 st.caption(
-    "Prototipo THINKMARK v2 · Paso 6.8.1 · Accesibilidad móvil y lenguaje claro · "
+    "Prototipo THINKMARK v2 · Paso 6.8.2 · Carrera, semestre y caso adaptado · "
     "La actividad no asigna calificación."
 )

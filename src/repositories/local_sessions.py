@@ -14,6 +14,10 @@ DEFAULT_STORE = ROOT / "data" / "runtime" / "sessions.json"
 
 def validate_record_transition(existing: dict[str, Any] | None, record: dict[str, Any]) -> None:
     """Protege los artefactos sellados en cualquier backend de persistencia."""
+    if existing and existing.get("academic_profile") and record.get("academic_profile") != existing.get("academic_profile"):
+        raise ValueError("El perfil académico asignado a la sesión no puede modificarse.")
+    if existing and existing.get("case_snapshot") and record.get("case_snapshot") != existing.get("case_snapshot"):
+        raise ValueError("El caso asignado a la sesión no puede modificarse.")
     if existing and existing.get("baseline_locked") and record.get("baseline_snapshot") != existing.get("baseline_snapshot"):
         raise ValueError("La línea base cerrada no puede modificarse.")
     if existing and existing.get("reflection_submitted") and record.get("final_responses") != existing.get("final_responses"):
