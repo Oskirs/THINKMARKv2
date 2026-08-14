@@ -21,15 +21,15 @@ THINKMARK_FIELDS: tuple[str, ...] = (
 )
 
 THINKMARK_LABELS = {
-    "tm_initial_position": "Posición inicial",
-    "tm_problem_reframed": "Problema reformulado",
-    "tm_evidence_reviewed": "Evidencia revisada",
-    "tm_evidence_appraisal": "Valoración de la evidencia",
-    "tm_ai_analysis": "Análisis crítico de IA",
-    "tm_final_decision": "Decisión final",
-    "tm_reasoning_change": "Cambio en el razonamiento",
-    "tm_personal_contribution": "Contribución propia",
-    "tm_remaining_limits": "Límites e incertidumbre pendiente",
+    "tm_initial_position": "Tu decisión al comenzar",
+    "tm_problem_reframed": "Cómo entiendes el problema al final",
+    "tm_evidence_reviewed": "Información que revisaste",
+    "tm_evidence_appraisal": "Qué tan útil fue esa información",
+    "tm_ai_analysis": "Lo que cuestionaste de la IA",
+    "tm_final_decision": "Tu decisión final",
+    "tm_reasoning_change": "Qué cambió en tu forma de pensar",
+    "tm_personal_contribution": "Lo que tú aportaste",
+    "tm_remaining_limits": "Lo que todavía falta saber",
 }
 
 MIN_SECTION_CHARS = 12

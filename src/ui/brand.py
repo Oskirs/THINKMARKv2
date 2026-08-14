@@ -19,12 +19,12 @@ def get_brand() -> dict[str, Any]:
         return json.load(config)
 
 
-def apply_brand() -> None:
-    brand = get_brand()
-    st.markdown(
-        f"""
+def build_brand_css(brand: dict[str, Any]) -> str:
+    """Devuelve estilos con contraste explícito y adaptación para celular."""
+    return f"""
         <style>
           :root {{
+            color-scheme: light !important;
             --tm-primary: {brand['primary']};
             --tm-primary-dark: {brand['primary_dark']};
             --tm-accent: {brand['accent']};
@@ -36,6 +36,10 @@ def apply_brand() -> None:
             --tm-primary-soft: #F5E9EB;
             --tm-accent-soft: #FFF3E2;
             --tm-accent-border: #F3C98E;
+          }}
+          html, body {{
+            color-scheme: light !important;
+            background: var(--tm-canvas) !important;
           }}
           html, body, [class*="css"] {{ font-family: {brand['font_family']}; }}
           .stApp {{ background: var(--tm-canvas); color: var(--tm-ink); }}
@@ -52,10 +56,129 @@ def apply_brand() -> None:
           div[data-testid="stButton"] > button {{ border-radius:10px; font-weight:650; }}
           div[data-testid="stProgress"] > div > div > div {{ background-color:var(--tm-primary); }}
           div[data-testid="stMetric"] {{ background:#fff; border:1px solid var(--tm-border); padding:.75rem; border-radius:14px; }}
+
+          /* Controles legibles incluso si el navegador fuerza modo oscuro. */
+          .stTextInput input,
+          .stTextArea textarea,
+          .stNumberInput input,
+          .stDateInput input,
+          [data-baseweb="input"] input {{
+            color-scheme: light !important;
+            background-color: #FFFFFF !important;
+            color: var(--tm-ink) !important;
+            -webkit-text-fill-color: var(--tm-ink) !important;
+            caret-color: var(--tm-primary) !important;
+            border-color: var(--tm-border) !important;
+            opacity: 1 !important;
+          }}
+          .stTextInput input::placeholder,
+          .stTextArea textarea::placeholder,
+          [data-baseweb="input"] input::placeholder {{
+            color: #6B7084 !important;
+            -webkit-text-fill-color: #6B7084 !important;
+            opacity: 1 !important;
+          }}
+          .stTextInput input:disabled,
+          .stTextArea textarea:disabled,
+          .stNumberInput input:disabled,
+          [data-baseweb="input"] input:disabled {{
+            background-color: #EEF0F3 !important;
+            color: #3F4558 !important;
+            -webkit-text-fill-color: #3F4558 !important;
+            opacity: 1 !important;
+          }}
+          .stTextInput input:focus,
+          .stTextArea textarea:focus,
+          [data-baseweb="input"] input:focus {{
+            border-color: var(--tm-primary) !important;
+            box-shadow: 0 0 0 2px rgba(118, 35, 47, .18) !important;
+            outline: none !important;
+          }}
+          [data-baseweb="select"] > div,
+          [data-baseweb="select"] input {{
+            color-scheme: light !important;
+            background-color: #FFFFFF !important;
+            color: var(--tm-ink) !important;
+            -webkit-text-fill-color: var(--tm-ink) !important;
+            border-color: var(--tm-border) !important;
+          }}
+          [data-baseweb="select"] svg {{ fill: var(--tm-ink) !important; }}
+          [data-baseweb="popover"],
+          [role="listbox"],
+          [role="option"] {{
+            color-scheme: light !important;
+            background-color: #FFFFFF !important;
+            color: var(--tm-ink) !important;
+          }}
+          [role="option"]:hover,
+          [role="option"][aria-selected="true"] {{ background-color: var(--tm-primary-soft) !important; }}
+          .stTextInput label,
+          .stTextArea label,
+          .stSelectbox label,
+          .stRadio label,
+          .stCheckbox label {{ color: var(--tm-ink) !important; }}
+
+          /* Tamaño táctil mínimo y ajuste responsive. */
+          div[data-testid="stButton"] > button,
+          div[data-testid="stFormSubmitButton"] > button {{ min-height: 44px; }}
+          @media (max-width: 768px) {{
+            .block-container {{
+              padding: 1rem .85rem 3.5rem !important;
+              max-width: 100% !important;
+            }}
+            h1 {{ font-size: 1.75rem !important; line-height: 1.18 !important; }}
+            h2 {{ font-size: 1.4rem !important; line-height: 1.22 !important; }}
+            h3 {{ font-size: 1.16rem !important; line-height: 1.25 !important; }}
+            p, label, li {{ line-height: 1.5 !important; }}
+            [data-testid="stHorizontalBlock"] {{
+              flex-wrap: wrap !important;
+              gap: .75rem !important;
+            }}
+            [data-testid="column"] {{
+              min-width: 100% !important;
+              flex: 1 1 100% !important;
+              width: 100% !important;
+            }}
+            .tm-card, .tm-question, .tm-opportunity {{
+              padding: .9rem 1rem !important;
+              border-radius: 12px !important;
+            }}
+            .tm-header img {{ width: 165px !important; max-width: 75vw !important; }}
+            .tm-tagline {{ font-size: .84rem !important; }}
+            .tm-badge {{ margin-top: .25rem; }}
+            .stTextInput input,
+            .stTextArea textarea,
+            .stNumberInput input,
+            [data-baseweb="input"] input,
+            [data-baseweb="select"] input {{
+              font-size: 16px !important;
+            }}
+            .stTextInput input,
+            .stNumberInput input,
+            [data-baseweb="input"] input {{ min-height: 44px !important; }}
+            .stTextArea textarea {{ min-height: 118px !important; }}
+            div[data-testid="stButton"] > button,
+            div[data-testid="stFormSubmitButton"] > button {{
+              width: 100% !important;
+              min-height: 48px !important;
+            }}
+            div[data-testid="stMetric"] {{ padding: .65rem !important; }}
+            [data-testid="stDataFrame"] {{ overflow-x: auto !important; }}
+          }}
+
+          @media (prefers-color-scheme: dark) {{
+            html, body, .stApp, [data-testid="stAppViewContainer"] {{
+              color-scheme: light !important;
+              background-color: var(--tm-canvas) !important;
+              color: var(--tm-ink) !important;
+            }}
+          }}
         </style>
-        """,
-        unsafe_allow_html=True,
-    )
+        """
+
+
+def apply_brand() -> None:
+    st.markdown(build_brand_css(get_brand()), unsafe_allow_html=True)
 
 
 def render_brand_header(*, compact: bool = False) -> None:

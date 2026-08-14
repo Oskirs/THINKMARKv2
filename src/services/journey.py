@@ -261,13 +261,13 @@ def create_or_resume_session(participant_id: str, repository: SessionRepository 
         "case_version": CASE_VERSION,
     }
     repository.save(_record_from_state())
-    st.session_state.access_notice = "Sesión creada. Tu código pseudónimo permite recuperar este avance."
+    st.session_state.access_notice = "Sesión creada. Tu código te permitirá recuperar este avance sin usar tu nombre."
     return False
 
 
 def save_baseline_draft(responses: dict[str, str], confidence: int, repository: SessionRepository | None = None) -> None:
     if st.session_state.baseline_locked:
-        raise ValueError("La línea base ya está cerrada.")
+        raise ValueError("Tu primera respuesta ya está guardada y no puede modificarse.")
     st.session_state.baseline_draft = {key: value.strip() for key, value in responses.items()}
     st.session_state.baseline_confidence = confidence
     (repository or get_session_repository()).save(_record_from_state())
@@ -275,7 +275,7 @@ def save_baseline_draft(responses: dict[str, str], confidence: int, repository: 
 
 def close_baseline(responses: dict[str, str], confidence: int, case_id: str, repository: SessionRepository | None = None) -> None:
     if st.session_state.baseline_locked:
-        raise ValueError("La línea base ya está cerrada.")
+        raise ValueError("Tu primera respuesta ya está guardada y no puede modificarse.")
     snapshot = seal_baseline(responses, confidence, case_id)
     st.session_state.baseline_draft = snapshot["responses"].copy()
     st.session_state.baseline_confidence = confidence
@@ -806,7 +806,7 @@ def resolve_screen_access(requested: str) -> str:
         st.session_state.access_notice = "Acepta las condiciones para iniciar el recorrido."
         return "E01"
     if not st.session_state.baseline_locked:
-        st.session_state.access_notice = "Completa y cierra tu posición inicial antes de continuar."
+        st.session_state.access_notice = "Completa y guarda tu primera respuesta antes de continuar."
         return "E02"
     sequence = [
         ("E03", True),

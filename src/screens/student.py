@@ -30,6 +30,7 @@ from src.services.journey import (
     unload_review_session,
 )
 from src.ui.layout import card, screen_title
+from src.ui.language import render_term_guide
 
 
 def _show_errors(errors: dict[str, str], labels: dict[str, str]) -> None:
@@ -44,20 +45,20 @@ def _show_access_notice() -> None:
 
 
 def render_e01(data: dict[str, Any]) -> None:
-    screen_title("E01", "Inicio, código y consentimiento", "Comprende el recorrido y crea una identidad pseudónima antes de iniciar.")
+    screen_title("E01", "Inicio y acuerdos de participación", "Conoce la actividad, usa tu código y confirma las condiciones antes de comenzar.")
     if st.session_state.access_notice:
         st.info(st.session_state.pop("access_notice"))
 
     col1, col2 = st.columns([1.45, 1])
     with col1:
         st.subheader("Antes de comenzar")
-        st.write("Explorarás un caso, dialogarás con un Coach que sólo hace preguntas y conservarás el control de tu ThinkMark.")
+        st.write("Analizarás un caso, conversarás con un Coach que sólo hace preguntas y revisarás tu ThinkMark antes de decidir si te representa.")
         if st.session_state.consent_status:
             st.success("Consentimiento registrado y sesión activa.")
             st.text_input("Código de participante", value=st.session_state.participant_id, disabled=True)
             accepted_at = st.session_state.consent_record.get("accepted_at", "")
             st.caption(f"Aceptación registrada: {accepted_at[:19].replace('T', ' ')} UTC")
-            if st.button("Continuar a mi posición inicial", type="primary", use_container_width=True):
+            if st.button("Continuar a mi primera respuesta", type="primary", use_container_width=True):
                 go_to_screen("E02")
                 st.rerun()
         else:
@@ -80,13 +81,13 @@ def render_e01(data: dict[str, Any]) -> None:
                     st.rerun()
     with col2:
         card("Duración estimada", "25–35 minutos")
-        card("Privacidad", "El demo no solicita nombre, matrícula ni correo.")
-        card("Resultado", "Una firma de razonamiento revisable por el estudiante.")
+        card("Privacidad", "La demostración no solicita nombre, matrícula ni correo.")
+        card("Resultado", "Un resumen editable de tu razonamiento, llamado ThinkMark.")
     st.caption("Las condiciones aceptadas quedan asociadas a las versiones vigentes del instrumento y del caso.")
 
 
 def render_e02(data: dict[str, Any]) -> None:
-    screen_title("E02", "Caso y posición inicial", "Captura una línea base antes de cualquier intervención de IA.")
+    screen_title("E02", "Caso y primera respuesta", "Explica qué piensas antes de conversar con el AI Coach. Esta será tu referencia inicial.")
     if st.session_state.access_notice:
         st.info(st.session_state.pop("access_notice"))
     st.subheader(data["title"])
@@ -95,26 +96,27 @@ def render_e02(data: dict[str, Any]) -> None:
         for fact in data["facts"]:
             st.markdown(f"- {fact}")
     st.markdown(f"<div class='tm-question'><strong>Pregunta central</strong><br>{data['central_question']}</div>", unsafe_allow_html=True)
-    st.warning("Responde primero con tu propio razonamiento. El AI Coach permanecerá bloqueado hasta que cierres esta posición inicial.")
+    st.warning("Responde con tus propias palabras. El AI Coach se habilitará cuando guardes esta primera respuesta como tu punto de partida.")
+    render_term_guide("evidence", "assumption")
 
     labels = [
-        ("¿Cómo defines el problema central?", "problem", "Explica qué está en juego y para quién."),
-        ("¿Qué evidencia tienes y cuál necesitarías?", "evidence", "Distingue datos disponibles de evidencia faltante."),
-        ("¿Qué riesgos, límites o supuestos tendría una posible IA?", "ai_critique", "Considera errores, sesgos o aspectos que la IA podría omitir."),
-        ("¿Qué decisión inicial tomarías y por qué?", "decision", "Incluye una postura o acción y al menos una razón."),
+        ("¿Cuál es el problema principal?", "problem", "Explica qué está pasando, a quién afecta y qué debe decidirse."),
+        ("¿Qué información apoya tu respuesta y qué información te falta?", "evidence", "Separa los datos disponibles de lo que todavía necesitas revisar."),
+        ("¿Qué podría equivocarse, pasar por alto o dar por cierto una IA?", "ai_critique", "Piensa en errores, sesgos o información que podría faltar."),
+        ("¿Qué harías por ahora y por qué?", "decision", "Escribe una decisión inicial y al menos una razón."),
     ]
     current = st.session_state.baseline_snapshot.get("responses", {}) if st.session_state.baseline_locked else st.session_state.baseline_draft
     confidence = st.session_state.baseline_snapshot.get("confidence", st.session_state.baseline_confidence) if st.session_state.baseline_locked else st.session_state.baseline_confidence
 
     if st.session_state.baseline_locked:
-        st.success("Tu posición inicial está cerrada. Esta instantánea ya no puede editarse y será el punto de comparación del Reasoning Delta.")
+        st.success("Tu primera respuesta quedó guardada y ya no puede editarse. Después se comparará con tu respuesta final.")
         cols = st.columns(2)
         for idx, (label, key, help_text) in enumerate(labels):
             cols[idx % 2].text_area(label, value=current[key], disabled=True, height=145, help=help_text)
         st.slider("Confianza inicial", 1, 5, value=confidence, disabled=True, help="1 = muy baja · 5 = muy alta")
         snapshot = st.session_state.baseline_snapshot
         st.caption(f"Cerrada: {snapshot['locked_at'][:19].replace('T', ' ')} UTC · Sello de integridad: {snapshot['integrity_hash'][:12]}…")
-        if st.button("Continuar al AI Coach", type="primary"):
+        if st.button("Continuar al AI Coach", type="primary", use_container_width=True):
             go_to_screen("E03")
             st.rerun()
         return
@@ -138,40 +140,40 @@ def render_e02(data: dict[str, Any]) -> None:
             help="1 = muy baja · 5 = muy alta",
             key="baseline_confidence_widget",
         )
-        freeze_confirmed = st.checkbox("Entiendo que esta versión quedará como mi punto de partida y ya no podré modificarla.")
+        freeze_confirmed = st.checkbox("Entiendo que esta respuesta será mi punto de partida y ya no podré modificarla.")
         save_col, close_col = st.columns(2)
         save_clicked = save_col.form_submit_button("Guardar borrador", use_container_width=True)
-        close_clicked = close_col.form_submit_button("Cerrar mi posición inicial", type="primary", use_container_width=True)
+        close_clicked = close_col.form_submit_button("Guardar mi primera respuesta", type="primary", use_container_width=True)
 
     if save_clicked:
         save_baseline_draft(responses, confidence_value)
-        st.success("Borrador guardado. Puedes cerrar la página y recuperarlo con tu código.")
+        st.success("Borrador guardado. Puedes cerrar la página y volver con tu código.")
     if close_clicked:
         errors = validate_baseline(responses, confidence_value)
         if not freeze_confirmed:
             errors["confirmation"] = "Confirma que entiendes el cierre antes de continuar."
         if errors:
-            st.error("Revisa la línea base antes de cerrarla:")
+            st.error("Revisa tu primera respuesta antes de guardarla:")
             friendly = {key: label for label, key, _ in labels}
             for key, message in errors.items():
                 st.markdown(f"- **{friendly.get(key, 'Confirmación')}**: {message}")
         else:
             close_baseline(responses, confidence_value, data["case_id"])
-            st.session_state.access_notice = "Línea base cerrada correctamente. El AI Coach ya está habilitado."
+            st.session_state.access_notice = "Tu primera respuesta quedó guardada. El AI Coach ya está disponible."
             go_to_screen("E03")
             st.rerun()
 
 
 def render_e03(data: dict[str, Any]) -> None:
-    screen_title("E03", "AI Coach", "Profundiza tu razonamiento mediante preguntas socráticas; el Coach no responde por ti.")
+    screen_title("E03", "AI Coach", "Responde preguntas breves para revisar mejor tus razones. El Coach no responde por ti.")
     _show_access_notice()
     config = load_coach_config()
     st.info(
-        "El Coach formula una pregunta por turno. No entrega soluciones, no califica y no modifica "
-        "tu posición inicial. Tú decides qué aceptar, cuestionar y verificar."
+        "El Coach hace una pregunta por turno. No entrega soluciones, no califica y no modifica "
+        "tu primera respuesta. Tú decides qué aceptar, cuestionar y revisar."
     )
-    with st.expander("Tu posición inicial cerrada", expanded=False):
-        for label, key in [("Problema", "problem"), ("Evidencia", "evidence"), ("Crítica de IA", "ai_critique"), ("Decisión", "decision")]:
+    with st.expander("Tu primera respuesta guardada", expanded=False):
+        for label, key in [("Problema al comenzar", "problem"), ("Información inicial", "evidence"), ("Lo que cuestionaste de la IA", "ai_critique"), ("Decisión al comenzar", "decision")]:
             st.markdown(f"**{label}.** {st.session_state.initial_responses.get(key, '')}")
 
     turns = st.session_state.coach_turns
@@ -179,10 +181,10 @@ def render_e03(data: dict[str, Any]) -> None:
     if not turns and not completed:
         st.markdown(
             "<div class='tm-question'><strong>Listo para iniciar</strong><br>"
-            "El Coach recibirá únicamente el caso, el fragmento pertinente de tu línea base y hasta dos turnos previos.</div>",
+            "El Coach recibirá únicamente el caso, la parte necesaria de tu primera respuesta y hasta dos respuestas anteriores.</div>",
             unsafe_allow_html=True,
         )
-        if st.button("Iniciar conversación socrática", type="primary", use_container_width=True):
+        if st.button("Iniciar conversación", type="primary", use_container_width=True):
             with st.spinner("Preparando una pregunta…"):
                 start_coach(data)
             st.rerun()
@@ -190,7 +192,7 @@ def render_e03(data: dict[str, Any]) -> None:
         return
 
     for turn in turns:
-        mode_label = "IA conectada" if turn.get("mode") == "openai" else "Banco pedagógico seguro"
+        mode_label = "IA conectada" if turn.get("mode") == "openai" else "Pregunta de respaldo segura"
         st.markdown(
             f"<div class='tm-question'><strong>Coach · {turn.get('focus', 'Razonamiento')}</strong><br>"
             f"{turn.get('question', '')}</div>",
@@ -200,7 +202,7 @@ def render_e03(data: dict[str, Any]) -> None:
         if turn.get("response"):
             st.markdown(f"**Tu respuesta:** {turn['response']}")
         if turn.get("safety_triggered"):
-            st.caption("Se activó una regla de seguridad pedagógica; la conversación continuó con una pregunta no resolutiva.")
+            st.caption("La pregunta original no cumplió las reglas del Coach; se mostró una pregunta segura que no entrega la respuesta.")
 
     current = st.session_state.coach_bridge
     if completed:
@@ -209,7 +211,7 @@ def render_e03(data: dict[str, Any]) -> None:
         usage = st.session_state.ai_usage
         st.caption(
             f"Trazabilidad técnica: {len(turns)} turno(s) · {usage.get('requests', 0)} solicitud(es) · "
-            f"{usage.get('fallbacks', 0)} fallback(s)."
+            f"{usage.get('fallbacks', 0)} pregunta(s) de respaldo."
         )
         if st.button("Continuar a Verify", type="primary"):
             go_to_screen("E04")
@@ -223,7 +225,7 @@ def render_e03(data: dict[str, Any]) -> None:
             "Tu razonamiento",
             value=current.get("response", "") if current.get("turn_number") == active_turn.get("turn_number") else "",
             height=140,
-            placeholder="Responde con tu propio análisis; el sistema no completará el texto por ti.",
+            placeholder="Escribe con tus propias palabras; el sistema no completará el texto por ti.",
             help=f"Desarrolla al menos {config['minimum_response_chars']} caracteres.",
         )
         claim = st.text_area(
@@ -262,9 +264,10 @@ def render_e03(data: dict[str, Any]) -> None:
 
 
 def render_e04(data: dict[str, Any]) -> None:
-    screen_title("E04", "Verify", "Contrasta una afirmación relevante con una fuente y explica cómo afecta tu postura.")
+    screen_title("E04", "Verify · Revisa una afirmación", "Consulta una fuente y explica si apoya, contradice o cambia lo que pensabas.")
     _show_access_notice()
-    st.caption("La aplicación valida la estructura de la URL; no certifica que una fuente sea confiable.")
+    st.caption("La aplicación sólo revisa que la liga tenga un formato válido. Tú debes explicar por qué la fuente sirve para esta actividad.")
+    render_term_guide("evidence")
     current = st.session_state.verification_draft or {"claim": st.session_state.claim_to_verify}
     read_only = st.session_state.reflection_submitted
     with st.form("verification_form"):
@@ -278,9 +281,9 @@ def render_e04(data: dict[str, Any]) -> None:
         assessment_options = ["confirma", "contradice", "matiza", "no es comprobable"]
         assessment_value = current.get("assessment", "matiza")
         assessment = st.selectbox("¿Qué hace la fuente respecto de la afirmación?", assessment_options, index=assessment_options.index(assessment_value), disabled=read_only)
-        reliability = st.text_area("¿Por qué esta fuente es pertinente o confiable?", value=current.get("reliability_reason", ""), height=110, disabled=read_only)
-        impact = st.text_area("¿Qué cambia o se fortalece en tu decisión?", value=current.get("impact", ""), height=110, disabled=read_only)
-        limitation = st.text_area("Limitación de acceso o de la fuente (opcional)", value=current.get("access_limitation", ""), height=75, disabled=read_only)
+        reliability = st.text_area("¿Por qué esta fuente sirve para revisar la afirmación?", value=current.get("reliability_reason", ""), height=110, disabled=read_only, help="Considera quién la publica, qué datos presenta y si explica sus límites.")
+        impact = st.text_area("Después de revisar la fuente, ¿qué cambia o se confirma en tu decisión?", value=current.get("impact", ""), height=110, disabled=read_only)
+        limitation = st.text_area("¿Qué limitación tiene la fuente o su acceso? (opcional)", value=current.get("access_limitation", ""), height=75, disabled=read_only)
         if not read_only:
             save_col, complete_col = st.columns(2)
             save_clicked = save_col.form_submit_button("Guardar borrador", use_container_width=True)
@@ -305,25 +308,26 @@ def render_e04(data: dict[str, Any]) -> None:
         if errors:
             _show_errors(errors, {"claim": "Afirmación", "source_title": "Título", "source_type": "Tipo", "source_url": "URL", "assessment": "Valoración", "reliability_reason": "Pertinencia/confiabilidad", "impact": "Impacto"})
         else:
-            st.session_state.access_notice = "Verificación completa. Ahora examina límites y supuestos."
+            st.session_state.access_notice = "Fuente revisada. Ahora identifica lo que la IA podría omitir o dar por cierto."
             go_to_screen("E05")
             st.rerun()
 
 
 def render_e05(data: dict[str, Any]) -> None:
-    screen_title("E05", "Challenge", "Examina límites y supuestos de la IA; formula una alternativa propia.")
+    screen_title("E05", "Challenge · Límites y otras opciones", "Identifica qué podría faltar en la propuesta de IA y plantea otra forma de actuar.")
     _show_access_notice()
+    render_term_guide("assumption", "counterargument")
     verified = st.session_state.verifications[0]
     st.markdown(f"<div class='tm-question'><strong>Afirmación examinada</strong><br>{verified['claim']}<br><br><strong>Resultado de Verify</strong><br>{verified['assessment']}: {verified['impact']}</div>", unsafe_allow_html=True)
     current = st.session_state.challenge_draft
     read_only = st.session_state.reflection_submitted
     with st.form("challenge_form"):
         cols = st.columns(2)
-        limitation = cols[0].text_area("Limitación u omisión específica", value=current.get("limitation", ""), height=115, disabled=read_only, help="¿Qué condición podría fallar?")
-        assumption = cols[1].text_area("Supuesto cuestionable", value=current.get("assumption", ""), height=115, disabled=read_only, help="¿Qué se está dando por cierto sin demostrarlo?")
-        missing = cols[0].text_area("Evidencia adicional necesaria", value=current.get("missing_evidence", ""), height=115, disabled=read_only)
-        alternative = cols[1].text_area("Alternativa propia", value=current.get("alternative", ""), height=115, disabled=read_only)
-        counterargument = st.text_area("Contraargumento propio (puede sustituir a la alternativa)", value=current.get("counterargument", ""), height=100, disabled=read_only)
+        limitation = cols[0].text_area("¿Qué podría estar incompleto o faltar?", value=current.get("limitation", ""), height=115, disabled=read_only, help="Piensa en una condición, persona o consecuencia que no se consideró.")
+        assumption = cols[1].text_area("¿Qué se está dando por cierto sin comprobar?", value=current.get("assumption", ""), height=115, disabled=read_only)
+        missing = cols[0].text_area("¿Qué información adicional necesitas?", value=current.get("missing_evidence", ""), height=115, disabled=read_only)
+        alternative = cols[1].text_area("¿Qué otra opción propones?", value=current.get("alternative", ""), height=115, disabled=read_only)
+        counterargument = st.text_area("¿Qué razón válida daría alguien que no está de acuerdo? (opcional si escribiste otra opción)", value=current.get("counterargument", ""), height=100, disabled=read_only)
         if not read_only:
             save_col, complete_col = st.columns(2)
             save_clicked = save_col.form_submit_button("Guardar borrador", use_container_width=True)
@@ -339,16 +343,17 @@ def render_e05(data: dict[str, Any]) -> None:
         if errors:
             _show_errors(errors, {"limitation": "Limitación", "assumption": "Supuesto", "missing_evidence": "Evidencia necesaria", "own_elaboration": "Elaboración propia", "repetition": "Autoría"})
         else:
-            st.session_state.access_notice = "Challenge completo. Ahora registra tu decisión humana."
+            st.session_state.access_notice = "Revisión completa. Ahora toma tu decisión y explica tus razones."
             go_to_screen("E06")
             st.rerun()
 
 
 def render_e06(data: dict[str, Any]) -> None:
-    screen_title("E06", "Decide", "Registra una decisión humana con evidencia, criterios y concesiones.")
+    screen_title("E06", "Decide · Tu decisión final", "Elige qué harás y explica qué información, razones y consecuencias tomaste en cuenta.")
     _show_access_notice()
+    render_term_guide("tradeoff")
     with st.expander("Referencias de tu recorrido", expanded=False):
-        st.markdown(f"**Posición inicial.** {st.session_state.initial_responses['decision']}")
+        st.markdown(f"**Decisión al comenzar.** {st.session_state.initial_responses['decision']}")
         st.markdown(f"**Verify.** {st.session_state.verifications[0]['assessment']}: {st.session_state.verifications[0]['impact']}")
         st.markdown(f"**Challenge.** {st.session_state.challenges[0]['limitation']}")
     current = st.session_state.decision_draft
@@ -362,7 +367,7 @@ def render_e06(data: dict[str, Any]) -> None:
         change = cols[1].text_area("Elementos que modificas o rechazas", value=current.get("change", ""), height=115, disabled=read_only)
         key_evidence = st.text_area("Evidencia clave", value=current.get("key_evidence", ""), height=100, disabled=read_only)
         evidence_weight = st.text_area("¿Por qué esa evidencia pesa en tu decisión?", value=current.get("evidence_weight", ""), height=100, disabled=read_only)
-        tradeoff = st.text_area("Aportación, criterio o trade-off que tú incorporaste", value=current.get("tradeoff", ""), height=100, disabled=read_only)
+        tradeoff = st.text_area("¿Qué se gana y qué se sacrifica con tu decisión?", value=current.get("tradeoff", ""), height=100, disabled=read_only, help="Explica el balance que aceptas y qué criterio propio utilizaste.")
         if not read_only:
             save_col, complete_col = st.columns(2)
             save_clicked = save_col.form_submit_button("Guardar borrador", use_container_width=True)
@@ -376,7 +381,7 @@ def render_e06(data: dict[str, Any]) -> None:
     if complete_clicked:
         errors = save_decision(payload, complete=True)
         if errors:
-            _show_errors(errors, {"decision_type": "Tipo de decisión", "keep": "Elementos conservados", "change": "Cambios", "key_evidence": "Evidencia clave", "evidence_weight": "Peso de la evidencia", "tradeoff": "Aportación o trade-off"})
+            _show_errors(errors, {"decision_type": "Tipo de decisión", "keep": "Elementos conservados", "change": "Cambios", "key_evidence": "Información clave", "evidence_weight": "Importancia de la información", "tradeoff": "Lo que se gana y se sacrifica"})
         else:
             st.session_state.access_notice = "Decisión guardada. Completa ahora tu reflexión final."
             go_to_screen("E07")
@@ -384,9 +389,10 @@ def render_e06(data: dict[str, Any]) -> None:
 
 
 def render_e07(data: dict[str, Any]) -> None:
-    screen_title("E07", "Reflect", "Captura la evidencia final comparable y reconoce qué cambió y qué sigue incierto.")
+    screen_title("E07", "Reflect · Reflexión final", "Escribe tu respuesta final y explica qué cambió, qué aprendiste y qué falta por investigar.")
     _show_access_notice()
-    with st.expander("Comparar con mi posición inicial (solo lectura)", expanded=True):
+    render_term_guide("uncertainty")
+    with st.expander("Comparar con mi primera respuesta (sólo lectura)", expanded=True):
         cols = st.columns(2)
         for idx, (label, key) in enumerate([("Problema inicial", "problem"), ("Evidencia inicial", "evidence"), ("Crítica inicial", "ai_critique"), ("Decisión inicial", "decision")]):
             cols[idx % 2].text_area(label, value=st.session_state.initial_responses[key], disabled=True, height=105, key=f"initial_compare_{key}")
@@ -396,14 +402,14 @@ def render_e07(data: dict[str, Any]) -> None:
     with st.form("reflection_form"):
         final_response = st.text_area("Respuesta final integrada", value=current.get("final_response", ""), height=140, disabled=read_only)
         cols = st.columns(2)
-        problem = cols[0].text_area("Problema reformulado", value=current.get("problem", ""), height=120, disabled=read_only)
-        evidence = cols[1].text_area("Evidencia valorada", value=current.get("evidence", ""), height=120, disabled=read_only)
-        critique = cols[0].text_area("Análisis crítico de IA", value=current.get("ai_critique", ""), height=120, disabled=read_only)
-        decision = cols[1].text_area("Justificación de la decisión final", value=current.get("decision", ""), height=120, disabled=read_only)
+        problem = cols[0].text_area("Después del análisis, ¿cuál es el verdadero problema?", value=current.get("problem", ""), height=120, disabled=read_only)
+        evidence = cols[1].text_area("¿Qué información revisaste y qué tan útil fue?", value=current.get("evidence", ""), height=120, disabled=read_only)
+        critique = cols[0].text_area("¿Qué cuestionaste de la propuesta de IA?", value=current.get("ai_critique", ""), height=120, disabled=read_only)
+        decision = cols[1].text_area("¿Cuál es tu decisión final y por qué?", value=current.get("decision", ""), height=120, disabled=read_only)
         change = st.text_area("¿Qué cambió o se fortaleció?", value=current.get("change", ""), height=95, disabled=read_only)
         learning = st.text_area("¿Qué aprendiste?", value=current.get("learning", ""), height=95, disabled=read_only)
-        contribution = st.text_area("¿Cuál fue tu contribución propia?", value=current.get("human_contribution", ""), height=95, disabled=read_only)
-        uncertainty = st.text_area("¿Qué incertidumbre permanece?", value=current.get("uncertainty", ""), height=85, disabled=read_only)
+        contribution = st.text_area("¿Qué idea, criterio o decisión aportaste tú?", value=current.get("human_contribution", ""), height=95, disabled=read_only)
+        uncertainty = st.text_area("¿Qué todavía no sabes o necesitas investigar?", value=current.get("uncertainty", ""), height=85, disabled=read_only)
         next_step = st.text_area("¿Cuál sería tu siguiente paso?", value=current.get("next_step", ""), height=85, disabled=read_only)
         final_confidence = st.slider("Confianza final", 1, 5, value=confidence, disabled=read_only, help="Usa la misma escala que al inicio.")
         confirm_submit = st.checkbox("Entiendo que al enviar esta reflexión quedará bloqueada para evaluación.", disabled=read_only, value=read_only)
@@ -435,7 +441,7 @@ def render_e07(data: dict[str, Any]) -> None:
                 go_to_screen("E08")
                 st.rerun()
         else:
-            st.success("Reflexión enviada · estado: awaiting_review. Un evaluador autorizado aplicará la rúbrica.")
+            st.success("Reflexión enviada. Una persona evaluadora revisará tus respuestas con la rúbrica.")
         if st.button("Actualizar estado compartido"):
             refresh_current_session()
             if st.session_state.reasoning_evaluation.get("status") == "validated":
@@ -444,8 +450,9 @@ def render_e07(data: dict[str, Any]) -> None:
 
 
 def render_e08(data: dict[str, Any]) -> None:
-    screen_title("E08", "Reasoning Delta", "Observa el cambio validado en cuatro dimensiones, sin convertirlo en ranking o calificación.")
+    screen_title("E08", "Reasoning Delta", "Compara tu primera respuesta y tu respuesta final en cuatro aspectos. No es una calificación.")
     _show_access_notice()
+    render_term_guide("reasoning_delta", title="¿Qué significa Reasoning Delta?")
     evaluation = st.session_state.reasoning_evaluation
     if evaluation.get("status") != "validated":
         st.warning("Reasoning Delta permanece bloqueado hasta que una persona valide las cuatro dimensiones en V01.")
@@ -466,11 +473,11 @@ def render_e08(data: dict[str, Any]) -> None:
     rows = []
     for item in calculation["dimensions"].values():
         if item["delta"] > 0:
-            interpretation = "Mayor explicitación en la evidencia final."
+            interpretation = "La respuesta final explicó este aspecto con mayor claridad."
         elif item["delta"] < 0:
-            interpretation = "La evidencia final fue valorada en un nivel menor; requiere revisión cualitativa."
+            interpretation = "La respuesta final recibió un nivel menor; conviene revisar la explicación de la persona evaluadora."
         else:
-            interpretation = "Nivel observado estable; puede existir aprendizaje sin cambio de nivel."
+            interpretation = "El nivel se mantuvo. Aun así, pudo existir aprendizaje que la escala no muestra."
         rows.append({
             "Dimensión": item["label"],
             "Inicial": item["initial_score"],
@@ -485,8 +492,8 @@ def render_e08(data: dict[str, Any]) -> None:
             st.markdown(f"**{item['label']}.** {item['evidence_note']}")
 
     st.info(
-        "Interpretación responsable: un delta positivo no prueba que THINKMARK causó el cambio; un delta cero no significa "
-        "ausencia de aprendizaje; y un delta negativo no es una calificación ni un diagnóstico."
+        "Cómo leerlo: una diferencia positiva no prueba que THINKMARK causó el cambio; una diferencia de cero no significa "
+        "que no aprendiste; y una diferencia negativa no es una calificación ni un diagnóstico."
     )
     st.caption(
         "Cambio dominante observado: " + ", ".join(calculation["dominant_change"]) +
@@ -501,12 +508,13 @@ def render_e08(data: dict[str, Any]) -> None:
 def render_e09(data: dict[str, Any]) -> None:
     screen_title(
         "E09",
-        "ThinkMark · Human Reasoning Signature",
-        "Revisa, corrige o rechaza la representación de lo que expresaste durante la actividad.",
+        "ThinkMark · Resumen de tu razonamiento",
+        "Revisa el resumen de lo que expresaste. Puedes corregirlo, aprobarlo o decidir que no te representa.",
     )
     _show_access_notice()
+    render_term_guide("thinkmark", title="¿Qué es una ThinkMark?")
     st.info(
-        "Tu ThinkMark es una propuesta editable, no una calificación ni un diagnóstico. "
+        "Tu ThinkMark es un resumen editable, no una calificación ni un diagnóstico. "
         "Sólo se vuelve final si confirmas que te representa."
     )
 
@@ -535,8 +543,8 @@ def render_e09(data: dict[str, Any]) -> None:
     if not st.session_state.thinkmark_draft:
         st.subheader("Generar la primera propuesta")
         st.write(
-            "La síntesis utilizará únicamente tu posición inicial, Verify, Challenge, Decide, Reflect "
-            "y el Reasoning Delta validado. Podrás editar cada sección antes de decidir."
+            "El resumen utilizará únicamente tus respuestas de las etapas anteriores y el Reasoning Delta validado. "
+            "Podrás editar cada sección antes de decidir."
         )
         if st.button("Generar mi borrador de ThinkMark", type="primary", use_container_width=True):
             with st.spinner("Organizando la evidencia que registraste…"):
@@ -612,7 +620,7 @@ def render_e09(data: dict[str, Any]) -> None:
                     st.session_state.access_notice = "La propuesta anterior se conservó y se generó una nueva versión."
                     st.rerun()
 
-    with st.expander(f"Historial trazable ({current_version} propuesta{'s' if current_version != 1 else ''})", expanded=False):
+    with st.expander(f"Historial de versiones ({current_version} propuesta{'s' if current_version != 1 else ''})", expanded=False):
         for item in reversed(st.session_state.thinkmark_versions):
             st.markdown(
                 f"**Versión {item['version_number']}** · {item['generated_at'][:19].replace('T', ' ')} UTC · "
@@ -621,7 +629,7 @@ def render_e09(data: dict[str, Any]) -> None:
 
 
 def render_e10(data: dict[str, Any]) -> None:
-    screen_title("E10", "Feedback y cierre", "Valora la experiencia y confirma que el recorrido quedó íntegramente guardado.")
+    screen_title("E10", "Comentarios y cierre", "Cuéntanos cómo fue la experiencia y confirma que todo el recorrido quedó guardado.")
     _show_access_notice()
     if not st.session_state.thinkmark_decided:
         st.warning("Primero debes registrar una decisión explícita sobre tu ThinkMark.")
@@ -638,7 +646,7 @@ def render_e10(data: dict[str, Any]) -> None:
         rating_labels = {
             "coach_helpfulness_rating": "Utilidad del AI Coach",
             "verification_helpfulness_rating": "Utilidad de Verify",
-            "decision_agency_rating": "Agencia sobre la decisión",
+            "decision_agency_rating": "La decisión fue mía",
             "thinkmark_fidelity_rating": "Fidelidad del ThinkMark",
             "reuse_intention_rating": "Intención de reutilizar",
         }

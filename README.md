@@ -1,8 +1,8 @@
 # THINKMARK v2 — prototipo Streamlit
 
 MVP para hacer visible el cambio del razonamiento humano antes, durante y después
-de una interacción guiada con IA. El paso 6.8 añade persistencia Supabase, accesos
-separados y preparación para publicación multiusuario.
+de una interacción guiada con IA. El paso 6.8.1 añade contraste estable en celulares,
+diseño responsive y lenguaje claro para estudiantes de licenciatura.
 
 ## Qué contiene
 
@@ -37,6 +37,10 @@ separados y preparación para publicación multiusuario.
 - Repositorios intercambiables: JSON local para demostración y Supabase para publicación.
 - Migración SQL con RLS, roles protegidos, auditoría y control de concurrencia.
 - Configuración de producción que se detiene si faltan secretos, sin volver al modo local.
+- Campos con fondo, texto, cursor y estados de lectura definidos para modo claro u oscuro.
+- Columnas y acciones que se acomodan verticalmente en pantallas de celular.
+- Política versionada de lenguaje claro y glosario breve dentro del recorrido estudiantil.
+- Guía de accesibilidad y redacción para validar nuevos casos antes de publicarlos.
 
 ## Ejecutar localmente
 
@@ -149,3 +153,10 @@ al evaluador/facilitador; D01 pertenece al profesor.
 
 El código, la migración y las pruebas están listos. Crear el proyecto externo, emitir
 credenciales y publicar la URL requiere una cuenta autorizada del equipo.
+
+## Accesibilidad móvil y lenguaje claro del paso 6.8.1
+
+La implementación y la lista de verificación están documentadas en
+`GUIA_ACCESIBILIDAD_LENGUAJE.md`. Los controles mantienen contraste explícito, los campos usan
+16 px en celular, las acciones se apilan y el vocabulario esencial se explica en el momento en
+que se utiliza. La dificultad permanece en el análisis, no en descifrar las instrucciones.

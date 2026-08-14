@@ -20,7 +20,7 @@ ROLE_LABELS = {
 def render_access_portal() -> None:
     st.markdown("<div class='tm-eyebrow'>ACCESO · THINKMARK</div>", unsafe_allow_html=True)
     st.title("Selecciona tu espacio de trabajo")
-    st.write("Cada rol tiene una ruta y permisos distintos. El código del estudiante nunca funciona como credencial administrativa.")
+    st.write("Cada rol tiene una ruta y permisos distintos. El código del estudiante sólo permite entrar a su actividad.")
     role = st.radio(
         "Tipo de acceso",
         list(ROLE_LABELS),
@@ -29,7 +29,7 @@ def render_access_portal() -> None:
         label_visibility="collapsed",
     )
     if role == "student":
-        st.info("Continuarás con el código pseudónimo entregado por el facilitador. No se solicitará nombre, matrícula ni correo.")
+        st.info("Continuarás con un código que no contiene tu nombre. No se solicitará matrícula ni correo.")
         if st.button("Entrar al recorrido del estudiante", type="primary", use_container_width=True):
             st.session_state.access_role = "student"
             st.session_state.internal_authenticated = False
@@ -66,7 +66,7 @@ def render_access_portal() -> None:
 def render_review_queue() -> None:
     st.markdown("<div class='tm-eyebrow'>ACCESO INTERNO · EVALUACIÓN</div>", unsafe_allow_html=True)
     st.title("Selecciona una sesión asignada")
-    st.warning("Prototipo: la asignación individual se filtrará por RLS al conectar Supabase. En modo local se muestran las sesiones de prueba disponibles.")
+    st.warning("En Supabase, cada evaluador sólo verá las sesiones que le fueron asignadas. En el modo local se muestran las sesiones de prueba disponibles.")
     repository = get_session_repository()
     records = [
         record for record in repository.list_for_evaluator(st.session_state.internal_user_id)
@@ -78,7 +78,7 @@ def render_review_queue() -> None:
     records.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
     by_code = {record["participant_id"]: record for record in records}
     selected = st.selectbox(
-        "Sesión pseudónima",
+        "Código de la sesión",
         list(by_code),
         format_func=lambda code: (
             f"{code} · {by_code[code].get('session_status', 'sin estado')} · "

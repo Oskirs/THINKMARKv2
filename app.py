@@ -17,7 +17,7 @@ st.set_page_config(
     page_title="THINKMARK · Human Reasoning",
     page_icon="🧭",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 apply_brand()
@@ -34,7 +34,7 @@ except ConfigurationError as exc:
 if not st.session_state.access_role:
     render_brand_header()
     render_access_portal()
-    st.caption("Prototipo THINKMARK v2 · Paso 6.8 · Accesos separados y persistencia multiusuario")
+    st.caption("Prototipo THINKMARK v2 · Paso 6.8.1 · Acceso separado, lenguaje claro y diseño móvil")
     st.stop()
 
 if st.session_state.access_role == "evaluator" and not st.session_state.internal_session_loaded:
@@ -74,6 +74,6 @@ screen = get_screen(st.session_state.current_screen)
 screen.renderer(demo_case)
 
 st.caption(
-    "Prototipo THINKMARK v2 · Paso 6.8 · Persistencia multiusuario y accesos separados · "
+    "Prototipo THINKMARK v2 · Paso 6.8.1 · Accesibilidad móvil y lenguaje claro · "
     "La actividad no asigna calificación."
 )

@@ -23,9 +23,9 @@ FOCUS_LABELS = {
 
 FALLBACK_QUESTIONS = {
     "problem": "¿Qué parte del problema cambiaría si consideraras a la persona más afectada por esta decisión?",
-    "evidence": "¿Qué evidencia respaldaría tu afirmación y qué límite tendría esa evidencia?",
-    "ai_critique": "¿Qué supuesto de la posible IA necesitas cuestionar antes de confiar en su recomendación?",
-    "decision": "¿Qué criterio humano sostiene tu decisión y qué costo o concesión estás aceptando?",
+    "evidence": "¿Qué información apoyaría tu afirmación y qué limitación tendría esa información?",
+    "ai_critique": "¿Qué está dando por cierto la IA sin haberlo comprobado?",
+    "decision": "¿Qué razón propia sostiene tu decisión y qué estás dispuesto a sacrificar?",
 }
 
 

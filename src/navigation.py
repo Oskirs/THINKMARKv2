@@ -28,13 +28,13 @@ class Screen:
 
 
 SCREENS: tuple[Screen, ...] = (
-    Screen("E01", "Inicio y consentimiento", "Recorrido del estudiante", 1, "src.screens.student:render_e01"),
-    Screen("E02", "Caso y posición inicial", "Recorrido del estudiante", 2, "src.screens.student:render_e02"),
+    Screen("E01", "Inicio y acuerdos", "Recorrido del estudiante", 1, "src.screens.student:render_e01"),
+    Screen("E02", "Caso y primera respuesta", "Recorrido del estudiante", 2, "src.screens.student:render_e02"),
     Screen("E03", "AI Coach", "Recorrido del estudiante", 3, "src.screens.student:render_e03"),
     Screen("E04", "Verify", "Recorrido del estudiante", 4, "src.screens.student:render_e04"),
-    Screen("E05", "Challenge", "Recorrido del estudiante", 5, "src.screens.student:render_e05"),
-    Screen("E06", "Decide", "Recorrido del estudiante", 6, "src.screens.student:render_e06"),
-    Screen("E07", "Reflect", "Recorrido del estudiante", 7, "src.screens.student:render_e07"),
+    Screen("E05", "Challenge · límites y opciones", "Recorrido del estudiante", 5, "src.screens.student:render_e05"),
+    Screen("E06", "Decide · decisión final", "Recorrido del estudiante", 6, "src.screens.student:render_e06"),
+    Screen("E07", "Reflect · reflexión final", "Recorrido del estudiante", 7, "src.screens.student:render_e07"),
     Screen("V01", "Validación de rúbrica", "Evaluación", 8, "src.screens.evaluator:render_v01"),
     Screen("E08", "Reasoning Delta", "Resultados del estudiante", 9, "src.screens.student:render_e08"),
     Screen("E09", "ThinkMark", "Resultados del estudiante", 10, "src.screens.student:render_e09"),

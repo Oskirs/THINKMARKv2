@@ -1,0 +1,40 @@
+{
+  "policy_version": "plain-language-undergraduate-v1",
+  "audience": "Estudiantes de 5.º y 7.º semestre de licenciatura",
+  "principles": [
+    "Usar frases breves, instrucciones directas y una acción principal por bloque.",
+    "Mantener el rigor del razonamiento y explicar los términos académicos necesarios.",
+    "No asumir conocimientos de otra carrera ni utilizar el semestre para inferir capacidad.",
+    "Conservar los nombres THINKMARK, AI Coach y Reasoning Delta, acompañados de una explicación clara."
+  ],
+  "terms": {
+    "evidence": {
+      "term": "Evidencia",
+      "plain": "Información que sirve para apoyar, cuestionar o cambiar una afirmación."
+    },
+    "assumption": {
+      "term": "Supuesto",
+      "plain": "Algo que se da por cierto sin haberlo comprobado."
+    },
+    "counterargument": {
+      "term": "Razón contraria",
+      "plain": "Una razón válida que podría presentar alguien que no está de acuerdo."
+    },
+    "tradeoff": {
+      "term": "Balance de la decisión",
+      "plain": "Lo que se gana y lo que se sacrifica al elegir una opción."
+    },
+    "uncertainty": {
+      "term": "Lo que falta saber",
+      "plain": "Información o preguntas que todavía no tienen una respuesta suficiente."
+    },
+    "reasoning_delta": {
+      "term": "Reasoning Delta",
+      "plain": "Comparación entre tu primera respuesta y tu respuesta final en cuatro aspectos. No es una calificación."
+    },
+    "thinkmark": {
+      "term": "ThinkMark",
+      "plain": "Resumen editable de las decisiones, evidencias y cambios que expresaste durante la actividad."
+    }
+  }
+}

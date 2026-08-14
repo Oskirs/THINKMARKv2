@@ -39,19 +39,19 @@ def render_sidebar(groups: Mapping[str, Sequence[Any]], current: str, allowed: s
     elif st.session_state.reasoning_evaluation.get("status") == "validated":
         st.success("Reasoning Delta validado · E08 disponible")
     elif st.session_state.reflection_submitted:
-        st.success("Recorrido enviado · awaiting_review")
+        st.success("Recorrido enviado · en espera de revisión")
     elif st.session_state.decision_completed:
-        st.info("Siguiente etapa: E07 · Reflect")
+        st.info("Siguiente etapa: E07 · reflexión final")
     elif st.session_state.challenge_completed:
-        st.info("Siguiente etapa: E06 · Decide")
+        st.info("Siguiente etapa: E06 · decisión final")
     elif st.session_state.verification_completed:
-        st.info("Siguiente etapa: E05 · Challenge")
+        st.info("Siguiente etapa: E05 · revisar límites y otras opciones")
     elif st.session_state.coach_completed or st.session_state.coach_simulation_completed:
         st.info("Siguiente etapa: E04 · Verify")
     elif st.session_state.baseline_locked:
         st.info("Siguiente etapa: E03 · conversación con el AI Coach")
     elif st.session_state.consent_status:
-        st.info("Completa E02 para habilitar el resto del recorrido.")
+        st.info("Completa tu primera respuesta en E02 para continuar.")
     else:
         st.info("Acepta las condiciones de E01 para crear o recuperar una sesión.")
     return selected

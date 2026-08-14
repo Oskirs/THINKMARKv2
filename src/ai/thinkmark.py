@@ -81,11 +81,11 @@ def local_draft(context: dict[str, Any]) -> dict[str, str]:
         return text if text else absent
 
     return normalize_content({
-        "tm_initial_position": expressed(initial.get("decision"), "No se registró una posición inicial suficiente."),
-        "tm_problem_reframed": expressed(reflection.get("problem"), "No se expresó una reformulación adicional del problema."),
+        "tm_initial_position": expressed(initial.get("decision"), "No se registró una decisión suficiente al comenzar."),
+        "tm_problem_reframed": expressed(reflection.get("problem"), "No se explicó de otra manera el problema al final."),
         "tm_evidence_reviewed": f"Se revisó {source} para contrastar: {verification.get('claim', '')}",
         "tm_evidence_appraisal": f"La fuente {assessment} la afirmación. {verification.get('reliability_reason', '')} {verification.get('impact', '')}",
-        "tm_ai_analysis": f"Se identificó esta limitación: {challenge.get('limitation', '')} El supuesto cuestionado fue: {challenge.get('assumption', '')}",
+        "tm_ai_analysis": f"Se identificó este límite: {challenge.get('limitation', '')} También se cuestionó esto que se daba por cierto: {challenge.get('assumption', '')}",
         "tm_final_decision": expressed(reflection.get("decision") or reflection.get("final_response"), "No se registró una decisión final suficiente."),
         "tm_reasoning_change": expressed(reflection.get("change"), "No se expresó un cambio específico; la postura puede haberse mantenido."),
         "tm_personal_contribution": expressed(
@@ -93,9 +93,9 @@ def local_draft(context: dict[str, Any]) -> dict[str, str]:
             "No se expresó una contribución personal adicional en los campos disponibles.",
         ),
         "tm_remaining_limits": (
-            f"Permanece esta incertidumbre: {reflection.get('uncertainty')} Siguiente paso: {reflection.get('next_step')}"
+            f"Todavía falta saber: {reflection.get('uncertainty')} Siguiente paso: {reflection.get('next_step')}"
             if reflection.get("uncertainty") or reflection.get("next_step")
-            else "No se expresaron límites o incertidumbres adicionales en los campos disponibles."
+            else "No se explicó qué información o preguntas siguen pendientes."
         ),
     })
 

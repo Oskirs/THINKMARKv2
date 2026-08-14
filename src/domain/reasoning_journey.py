@@ -42,12 +42,12 @@ def validate_challenge(payload: dict[str, str]) -> dict[str, str]:
     alternative = payload.get("alternative", "").strip()
     counterargument = payload.get("counterargument", "").strip()
     if max(len(alternative), len(counterargument)) < 35:
-        errors["own_elaboration"] = "Desarrolla una alternativa o un contraargumento propio con al menos 35 caracteres."
+        errors["own_elaboration"] = "Explica otra opción o una razón contraria con al menos 35 caracteres."
     reference = payload.get("reference_claim", "").strip().casefold()
     examined = [payload.get(key, "").strip().casefold() for key in ("limitation", "assumption", "missing_evidence", "alternative", "counterargument")]
     repeated = sum(bool(value) and SequenceMatcher(None, reference, value).ratio() > 0.88 for value in examined)
     if reference and repeated >= 3:
-        errors["repetition"] = "Varias respuestas repiten la afirmación casi literalmente; explica límites y alternativas con tus propias palabras."
+        errors["repetition"] = "Varias respuestas repiten casi lo mismo; explica lo que falta y otras opciones con tus propias palabras."
     return errors
 
 
