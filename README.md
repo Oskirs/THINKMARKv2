@@ -1,9 +1,8 @@
 # THINKMARK v2 — prototipo Streamlit
 
 MVP para hacer visible el cambio del razonamiento humano antes, durante y después
-de una interacción guiada con IA. El paso 6.4 incorpora un AI Coach socrático mediante
-un adaptador de Responses API, guardrails y un banco pedagógico de fallo seguro. Todavía
-no envía información a Supabase.
+de una interacción guiada con IA. El paso 6.8 añade persistencia Supabase, accesos
+separados y preparación para publicación multiusuario.
 
 ## Qué contiene
 
@@ -15,12 +14,29 @@ no envía información a Supabase.
 - Adaptador OpenAI configurable y fallback que conserva el recorrido cuando no hay clave o la salida se bloquea.
 - E04–E07 funcionales, secuenciales y recuperables.
 - Envío final a estado `awaiting_review` sin sobrescribir la línea base.
+- V01 funcional con evidencia inicial/final, niveles enteros 1–4, notas obligatorias y validación humana.
+- E08 funcional con promedios, deltas por dimensión e interpretación responsable.
+- E09 funcional con nueve secciones editables, vista final y decisión explícita del estudiante.
+- Generación estructurada con integración OpenAI opcional y síntesis local segura sin clave.
+- Hasta tres propuestas trazables; regenerar nunca sobrescribe versiones anteriores.
+- Aprobación sin cambios, aprobación con correcciones o decisión de no aprobar.
+- ThinkMark final inmutable, versionado y con sello de integridad.
+- E10 funcional con cinco valoraciones, dos comentarios opcionales y cinco controles del facilitador.
+- Cierre de una sola escritura con comprobaciones técnicas, fecha y sello de integridad.
+- D01 funcional con métricas agregadas, fortaleza, oportunidad, evidencia e intervención.
+- Propuesta docente mediante reglas auditables, editable y aceptable, ajustable o rechazable.
+- Evaluación validada inmutable, versionada y con sello de integridad.
 - Persistencia JSON local mediante un repositorio reemplazable por Supabase.
 - Caso y recorrido de demostración separados del código.
 - Dashboard docente con gráfica nativa y oportunidad de aprendizaje.
 - Configuración estética desacoplada.
 - Paleta alineada con los colores observados en los activos públicos oficiales de la UAG.
 - Pruebas automáticas para el registro de pantallas y los fixtures.
+- Portal de acceso separado para estudiante, evaluador/facilitador y profesor.
+- Cola de revisión limitada a las sesiones asignadas a cada evaluador.
+- Repositorios intercambiables: JSON local para demostración y Supabase para publicación.
+- Migración SQL con RLS, roles protegidos, auditoría y control de concurrencia.
+- Configuración de producción que se detiene si faltan secretos, sin volver al modo local.
 
 ## Ejecutar localmente
 
@@ -62,12 +78,15 @@ o variables de entorno y nunca deben entrar al repositorio.
 La configuración desacoplada está en `config/ai_coach.json`. El modelo predeterminado
 puede sobrescribirse con `OPENAI_MODEL` sin cambiar el código.
 
-## Persistencia temporal
+## Persistencia y modos de operación
 
 Las sesiones se guardan en `data/runtime/sessions.json`; la carpeta está excluida de
-Git. Esto permite probar recuperación e inmutabilidad sin configurar servicios externos.
-En Streamlit Community Cloud el almacenamiento local es efímero y no debe usarse para
-un piloto real. El paso 6.8 reemplazará este adaptador por Supabase con políticas de acceso.
+Git cuando `PERSISTENCE_MODE = "local"`. Este modo sirve para una demostración controlada,
+pero no para un piloto real porque el almacenamiento de Streamlit Community Cloud es efímero.
+
+Para trabajo multiusuario se usa `PERSISTENCE_MODE = "supabase"`. La aplicación exige URL,
+clave publicable y clave secreta válidas; las sesiones, asignaciones y oportunidades se
+guardan en Supabase. La configuración completa está en `GUIA_SUPABASE_DESPLIEGUE.md`.
 
 ## Pruebas
 
@@ -83,20 +102,50 @@ instalarlas en Streamlit Community Cloud. Para desarrollo puede usarse:
 python -m pip install -r requirements-dev.txt
 ```
 
-## Publicación preliminar
+## Publicación multiusuario
 
-1. Subir esta carpeta a un repositorio de GitHub.
-2. En Streamlit Community Cloud, crear una app desde el repositorio.
-3. Seleccionar `app.py` como archivo principal.
-4. Para IA real, agregar `OPENAI_API_KEY` y opcionalmente `OPENAI_MODEL` en los secretos de la app.
+1. Crear Supabase y ejecutar `supabase/migrations/202608130001_thinkmark_v2.sql`.
+2. Crear las cuentas internas y asignar los expedientes a sus evaluadores.
+3. Subir esta carpeta a un repositorio privado de GitHub.
+4. Crear la app en Streamlit Community Cloud seleccionando `app.py`.
+5. Agregar los secretos de Supabase y, si se usará IA real, los de OpenAI.
+6. Verificar el recorrido completo en tres ventanas privadas, una por rol.
 
 El MVP utiliza únicamente componentes nativos de Streamlit en producción. Esta
 decisión evita que la demostración falle por dependencias opcionales de gráficas.
 
-La conexión a Supabase, las políticas de seguridad y el despliegue final corresponden
-al paso 6.8.
+No subir `.streamlit/secrets.toml`. La guía incluye las comprobaciones previas al piloto.
 
-## Límite del paso 6.4
+## Evaluación y Reasoning Delta del paso 6.5
 
-El Coach sólo acompaña E03 y no busca fuentes ni evalúa el trabajo. V01 es únicamente
-una vista previa: la evaluación y el Reasoning Delta se implementarán en el paso 6.5.
+La configuración aprobada de la rúbrica vive en `config/reasoning_delta_rubric.json`.
+El evaluador aplica los mismos cuatro criterios al momento inicial y final; la aplicación
+no asigna niveles. Sólo valida completitud, calcula `final - inicial` y publica una evaluación
+que ya fue confirmada por una persona.
+
+Reasoning Delta es evidencia formativa descriptiva. No debe interpretarse como inteligencia,
+diagnóstico, calificación, cambio obligatorio de opinión ni efecto causal probado.
+
+## Human Reasoning Signature del paso 6.6
+
+La configuración está en `config/thinkmark.json` y las instrucciones de uso y prueba en
+`GUIA_THINKMARK.md`. La aplicación sólo entrega una propuesta construida con evidencia del
+recorrido. El texto final pertenece al estudiante: puede editar, regenerar, aprobar o decidir
+no aprobar. Únicamente una aprobación explícita crea `thinkmark_final`.
+
+## Feedback, cierre y dashboard del paso 6.7
+
+Las instrucciones de operación están en `GUIA_CIERRE_DASHBOARD.md`. El feedback del
+estudiante y los controles del facilitador están separados. El dashboard no ordena ni
+diagnostica personas: agrega únicamente sesiones autorizadas y Deltas previamente validados
+por una persona. La oportunidad es una propuesta hasta que el profesor la acepta, ajusta o rechaza.
+
+## Supabase y separación de accesos del paso 6.8
+
+La guía operativa está en `GUIA_SUPABASE_DESPLIEGUE.md` y el ejemplo de secretos en
+`.streamlit/secrets.toml.example`. El estudiante entra con un código privado; evaluador y
+profesor usan correo, contraseña y rol protegido. V01 y los controles de cierre pertenecen
+al evaluador/facilitador; D01 pertenece al profesor.
+
+El código, la migración y las pruebas están listos. Crear el proyecto externo, emitir
+credenciales y publicar la URL requiere una cuenta autorizada del equipo.

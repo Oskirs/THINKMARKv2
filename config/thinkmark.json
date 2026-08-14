@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "provider": "openai",
+  "model": "gpt-5.4-mini",
+  "timeout_seconds": 25,
+  "max_versions": 3,
+  "fallback_enabled": true,
+  "policy_version": "thinkmark-grounded-v1",
+  "prompt_version": "thinkmark-synthesis-v1",
+  "prompt_path": "config/prompts/thinkmark_synthesis_v1.txt"
+}

@@ -8,19 +8,28 @@ import streamlit as st
 
 from src.ai.coach import load_coach_config
 from src.domain.baseline import MIN_RESPONSE_CHARS, validate_baseline, validate_participant_code
+from src.domain.thinkmark import THINKMARK_FIELDS, THINKMARK_LABELS
 from src.services.journey import (
     close_baseline,
     create_or_resume_session,
+    decide_thinkmark,
+    finalize_session,
+    generate_thinkmark,
     go_to_screen,
+    refresh_current_session,
     save_baseline_draft,
     save_challenge,
     save_decision,
     save_reflection,
+    save_student_feedback,
+    save_thinkmark_corrections,
     save_verification,
+    resume_screen_id,
     start_coach,
     submit_coach_turn,
+    unload_review_session,
 )
-from src.ui.layout import card, demo_notice, screen_title
+from src.ui.layout import card, screen_title
 
 
 def _show_errors(errors: dict[str, str], labels: dict[str, str]) -> None:
@@ -67,7 +76,7 @@ def render_e01(data: dict[str, Any]) -> None:
                     st.error("Para continuar debes confirmar las tres condiciones. Si no deseas participar, puedes cerrar esta página sin crear una sesión.")
                 else:
                     resumed = create_or_resume_session(normalized)
-                    go_to_screen("E03" if resumed and st.session_state.baseline_locked else "E02")
+                    go_to_screen(resume_screen_id() if resumed else "E02")
                     st.rerun()
     with col2:
         card("Duración estimada", "25–35 minutos")
@@ -420,46 +429,311 @@ def render_e07(data: dict[str, Any]) -> None:
                 go_to_screen("V01")
                 st.rerun()
     if read_only:
-        st.success("Reflexión enviada · estado: awaiting_review. Sólo un facilitador podrá solicitar una reapertura en una fase posterior.")
-        if st.button("Ir a validación de la rúbrica", type="primary"):
-            go_to_screen("V01")
+        if st.session_state.reasoning_evaluation.get("status") == "validated":
+            st.success("La evaluación humana ya fue validada. Puedes continuar a tus resultados.")
+            if st.button("Ver Reasoning Delta", type="primary"):
+                go_to_screen("E08")
+                st.rerun()
+        else:
+            st.success("Reflexión enviada · estado: awaiting_review. Un evaluador autorizado aplicará la rúbrica.")
+        if st.button("Actualizar estado compartido"):
+            refresh_current_session()
+            if st.session_state.reasoning_evaluation.get("status") == "validated":
+                go_to_screen("E08")
             st.rerun()
 
 
 def render_e08(data: dict[str, Any]) -> None:
     screen_title("E08", "Reasoning Delta", "Observa el cambio validado en cuatro dimensiones, sin convertirlo en ranking o calificación.")
-    names = {"problem": "Problema", "evidence": "Evidencia", "ai_critique": "Crítica de IA", "decision": "Decisión"}
-    cols = st.columns(4)
-    for col, (key, (initial, final)) in zip(cols, data["delta"].items()):
-        col.metric(names[key], f"Nivel {final}", delta=f"{final-initial:+d}")
-    st.caption("Resultados simulados sujetos a validación humana mediante la Rúbrica Reasoning Delta v2.")
-    demo_notice("el paso 6.5")
+    _show_access_notice()
+    evaluation = st.session_state.reasoning_evaluation
+    if evaluation.get("status") != "validated":
+        st.warning("Reasoning Delta permanece bloqueado hasta que una persona valide las cuatro dimensiones en V01.")
+        return
+    calculation = evaluation["calculation"]
+    st.success(f"Resultado validado con {evaluation['rubric_version']}. La aplicación sólo calculó las diferencias aritméticas.")
+
+    summary_cols = st.columns(3)
+    summary_cols[0].metric("Promedio inicial", f"{calculation['average_initial']:.2f}")
+    summary_cols[1].metric("Promedio final", f"{calculation['average_final']:.2f}")
+    summary_cols[2].metric("Delta promedio", f"{calculation['delta_average']:+.2f}")
+
+    st.subheader("Resultados por dimensión")
+    dimension_cols = st.columns(4)
+    for col, item in zip(dimension_cols, calculation["dimensions"].values()):
+        col.metric(item["label"], f"Nivel {item['final_score']}", delta=f"{item['delta']:+d}")
+
+    rows = []
+    for item in calculation["dimensions"].values():
+        if item["delta"] > 0:
+            interpretation = "Mayor explicitación en la evidencia final."
+        elif item["delta"] < 0:
+            interpretation = "La evidencia final fue valorada en un nivel menor; requiere revisión cualitativa."
+        else:
+            interpretation = "Nivel observado estable; puede existir aprendizaje sin cambio de nivel."
+        rows.append({
+            "Dimensión": item["label"],
+            "Inicial": item["initial_score"],
+            "Final": item["final_score"],
+            "Delta": item["delta"],
+            "Lectura descriptiva": interpretation,
+        })
+    st.dataframe(rows, width="stretch", hide_index=True)
+
+    with st.expander("Evidencia documentada por la persona evaluadora", expanded=False):
+        for item in calculation["dimensions"].values():
+            st.markdown(f"**{item['label']}.** {item['evidence_note']}")
+
+    st.info(
+        "Interpretación responsable: un delta positivo no prueba que THINKMARK causó el cambio; un delta cero no significa "
+        "ausencia de aprendizaje; y un delta negativo no es una calificación ni un diagnóstico."
+    )
+    st.caption(
+        "Cambio dominante observado: " + ", ".join(calculation["dominant_change"]) +
+        " · Candidata(s) a oportunidad de aprendizaje: " + ", ".join(calculation["learning_opportunity_candidates"]) +
+        ". La oportunidad docente se validará en el paso 6.7."
+    )
+    if st.button("Revisar mi ThinkMark", type="primary", use_container_width=True):
+        go_to_screen("E09")
+        st.rerun()
 
 
 def render_e09(data: dict[str, Any]) -> None:
-    screen_title("E09", "ThinkMark · Human Reasoning Signature", "Revisa y decide cómo queda representado tu razonamiento.")
-    labels = {
-        "reframed_problem": "Problema reformulado",
-        "reviewed_evidence": "Evidencia revisada",
-        "ai_analysis": "Análisis de IA",
-        "human_decision": "Decisión humana",
-        "change": "Cambio",
-        "human_contribution": "Contribución propia",
-        "limits": "Límites",
-    }
-    for key, label in labels.items():
-        st.text_area(label, value=data["thinkmark"][key], disabled=True, height=85)
-    st.radio("Decisión del estudiante", ["Aprobar", "Corregir antes de aprobar"], horizontal=True, disabled=True)
-    demo_notice("el paso 6.6")
+    screen_title(
+        "E09",
+        "ThinkMark · Human Reasoning Signature",
+        "Revisa, corrige o rechaza la representación de lo que expresaste durante la actividad.",
+    )
+    _show_access_notice()
+    st.info(
+        "Tu ThinkMark es una propuesta editable, no una calificación ni un diagnóstico. "
+        "Sólo se vuelve final si confirmas que te representa."
+    )
+
+    if st.session_state.thinkmark_decided:
+        status = st.session_state.thinkmark_approval_status
+        if status == "not_approved":
+            st.warning("Decidiste no aprobar esta ThinkMark. No existe una versión final atribuida a ti.")
+            content = st.session_state.thinkmark_corrections
+        else:
+            label = "Aprobada sin cambios" if status == "approved_as_generated" else "Aprobada con correcciones"
+            st.success(f"{label}. La versión final quedó sellada y ya no puede modificarse.")
+            content = st.session_state.thinkmark_final["content"]
+        for field in THINKMARK_FIELDS:
+            st.text_area(THINKMARK_LABELS[field], value=content.get(field, ""), disabled=True, height=105, key=f"final_{field}")
+        if st.session_state.thinkmark_final:
+            final = st.session_state.thinkmark_final
+            st.caption(
+                f"Aprobada: {final['approved_at'][:19].replace('T', ' ')} UTC · "
+                f"Sello de integridad: {final['integrity_hash'][:12]}…"
+            )
+        if st.button("Continuar a feedback y cierre", type="primary", use_container_width=True):
+            go_to_screen("E10")
+            st.rerun()
+        return
+
+    if not st.session_state.thinkmark_draft:
+        st.subheader("Generar la primera propuesta")
+        st.write(
+            "La síntesis utilizará únicamente tu posición inicial, Verify, Challenge, Decide, Reflect "
+            "y el Reasoning Delta validado. Podrás editar cada sección antes de decidir."
+        )
+        if st.button("Generar mi borrador de ThinkMark", type="primary", use_container_width=True):
+            with st.spinner("Organizando la evidencia que registraste…"):
+                errors = generate_thinkmark()
+            if errors:
+                _show_errors(errors, {"thinkmark": "ThinkMark", "regeneration": "Nueva propuesta"})
+            else:
+                st.session_state.access_notice = "Propuesta generada. Revísala sección por sección antes de decidir."
+                st.rerun()
+        return
+
+    current_version = len(st.session_state.thinkmark_versions)
+    current = st.session_state.thinkmark_corrections or st.session_state.thinkmark_draft
+    version = st.session_state.thinkmark_versions[-1]
+    mode_label = "integración configurada" if version["mode"] == "openai" else "síntesis local segura"
+    st.caption(
+        f"Propuesta {current_version} de 3 · {mode_label} · Política {version['policy_version']} · "
+        "El borrador de origen se conserva aunque hagas cambios."
+    )
+
+    with st.form(f"thinkmark_review_v{current_version}"):
+        edited: dict[str, str] = {}
+        for field in THINKMARK_FIELDS:
+            edited[field] = st.text_area(
+                THINKMARK_LABELS[field],
+                value=current.get(field, ""),
+                height=105,
+                key=f"thinkmark_{field}_v{current_version}",
+            )
+        confirmed = st.checkbox(
+            "Confirmo que revisé las nueve secciones y que mi decisión se refiere al razonamiento que expresé en esta actividad."
+        )
+        save_col, approve_col, correct_col, reject_col = st.columns([1, 1, 1.25, 1])
+        save_clicked = save_col.form_submit_button("Guardar cambios", use_container_width=True)
+        approve_clicked = approve_col.form_submit_button("Aprobar", type="primary", use_container_width=True)
+        correct_clicked = correct_col.form_submit_button("Corregir y aprobar", use_container_width=True)
+        reject_clicked = reject_col.form_submit_button("No aprobar", use_container_width=True)
+
+    if save_clicked:
+        save_thinkmark_corrections(edited)
+        st.success("Cambios guardados. Aún no has aprobado ni rechazado la propuesta.")
+    if approve_clicked or correct_clicked or reject_clicked:
+        status = (
+            "approved_as_generated" if approve_clicked else
+            "approved_with_corrections" if correct_clicked else
+            "not_approved"
+        )
+        errors = decide_thinkmark(edited, status=status, confirmed=confirmed)
+        if errors:
+            _show_errors(errors, THINKMARK_LABELS | {"confirmation": "Confirmación", "decision": "Decisión", "thinkmark": "ThinkMark"})
+        else:
+            st.session_state.access_notice = "Tu decisión sobre la ThinkMark quedó registrada explícitamente."
+            st.rerun()
+
+    config_max = 3
+    with st.expander("La propuesta no me representa: solicitar otra versión", expanded=False):
+        if current_version >= config_max:
+            st.warning("Ya se generaron las tres propuestas permitidas en este MVP. Puedes editar la actual o decidir no aprobarla.")
+        else:
+            with st.form(f"thinkmark_regenerate_v{current_version}"):
+                reason = st.text_area(
+                    "¿Qué debería representar mejor la nueva propuesta?",
+                    height=85,
+                    help="Tu explicación queda en el historial y no cambia tus respuestas originales.",
+                )
+                regenerate = st.form_submit_button("Rechazar esta propuesta y regenerar", use_container_width=True)
+            if regenerate:
+                with st.spinner("Creando una nueva propuesta sin alterar tu evidencia original…"):
+                    errors = generate_thinkmark(rejection_reason=reason)
+                if errors:
+                    _show_errors(errors, {"regeneration": "Regeneración", "thinkmark": "ThinkMark"})
+                else:
+                    st.session_state.access_notice = "La propuesta anterior se conservó y se generó una nueva versión."
+                    st.rerun()
+
+    with st.expander(f"Historial trazable ({current_version} propuesta{'s' if current_version != 1 else ''})", expanded=False):
+        for item in reversed(st.session_state.thinkmark_versions):
+            st.markdown(
+                f"**Versión {item['version_number']}** · {item['generated_at'][:19].replace('T', ' ')} UTC · "
+                f"{item['mode']} · `{item['content_hash'][:12]}…`"
+            )
 
 
 def render_e10(data: dict[str, Any]) -> None:
     screen_title("E10", "Feedback y cierre", "Valora la experiencia y confirma que el recorrido quedó íntegramente guardado.")
-    cols = st.columns(3)
-    cols[0].metric("Recorrido", "Completo")
-    cols[1].metric("ThinkMark", "Aprobado")
-    cols[2].metric("Integridad", "10/10 etapas")
-    st.slider("¿Qué tan útil fue el Coach?", 1, 5, 4, disabled=True)
-    st.text_area("¿Qué fue lo más útil?", value="Las preguntas me hicieron precisar qué evidencia necesitaba.", disabled=True)
-    st.success("Demostración cerrada. No se ha enviado información a servicios externos.")
-    demo_notice("el paso 6.7")
+    _show_access_notice()
+    if not st.session_state.thinkmark_decided:
+        st.warning("Primero debes registrar una decisión explícita sobre tu ThinkMark.")
+        return
+
+    role = st.session_state.access_role
+    if st.session_state.completed:
+        st.success("Sesión completada. El feedback, los controles y la decisión sobre ThinkMark quedaron sellados.")
+        cols = st.columns(3)
+        cols[0].metric("Recorrido", "Completo")
+        cols[1].metric("ThinkMark", "Aprobado" if st.session_state.thinkmark_final else "No aprobado")
+        cols[2].metric("Controles técnicos", f"{sum(st.session_state.completion_integrity['checks'].values())}/5")
+        feedback = st.session_state.feedback
+        rating_labels = {
+            "coach_helpfulness_rating": "Utilidad del AI Coach",
+            "verification_helpfulness_rating": "Utilidad de Verify",
+            "decision_agency_rating": "Agencia sobre la decisión",
+            "thinkmark_fidelity_rating": "Fidelidad del ThinkMark",
+            "reuse_intention_rating": "Intención de reutilizar",
+        }
+        st.dataframe(
+            [{"Aspecto": label, "Valoración": feedback[key]} for key, label in rating_labels.items()],
+            hide_index=True,
+            width="stretch",
+        )
+        st.caption(
+            f"Cierre: {st.session_state.completed_at[:19].replace('T', ' ')} UTC · "
+            f"Sello de integridad: {st.session_state.completion_integrity['integrity_hash'][:12]}…"
+        )
+        st.info("El feedback se utiliza únicamente de forma agregada y no modifica Delta ni ThinkMark.")
+        if role == "evaluator" and st.button("Volver a la cola de sesiones", type="primary", use_container_width=True):
+            unload_review_session()
+            st.rerun()
+        return
+
+    rating_labels = {
+        "coach_helpfulness_rating": "El AI Coach me ayudó a pensar sin darme la respuesta.",
+        "verification_helpfulness_rating": "Verify me ayudó a valorar mejor la evidencia.",
+        "decision_agency_rating": "La decisión final fue propia.",
+        "thinkmark_fidelity_rating": "La ThinkMark representa adecuadamente lo que expresé.",
+        "reuse_intention_rating": "Usaría nuevamente una actividad como THINKMARK.",
+    }
+    if role == "student":
+        if st.session_state.feedback_submitted:
+            st.success("Feedback enviado. La sesión está esperando los controles finales de un facilitador autorizado.")
+            st.info("Puedes cerrar esta página. Tu Reasoning Delta y tu ThinkMark ya están guardados y no serán modificados por el cierre.")
+            if st.button("Actualizar estado del cierre"):
+                refresh_current_session()
+                st.rerun()
+            return
+        st.info("Este bloque pertenece al estudiante. El feedback se enviará una sola vez y no modifica Reasoning Delta ni ThinkMark.")
+        current_feedback = st.session_state.feedback_draft
+        with st.form("student_feedback_form"):
+            st.subheader("Feedback del estudiante")
+            st.caption("1 = totalmente en desacuerdo · 5 = totalmente de acuerdo")
+            ratings: dict[str, int | None] = {}
+            for field, label in rating_labels.items():
+                options: list[int | None] = [None, 1, 2, 3, 4, 5]
+                value = current_feedback.get(field)
+                ratings[field] = st.selectbox(
+                    label, options, index=options.index(value) if value in options else 0,
+                    format_func=lambda item: "Selecciona…" if item is None else str(item), key=f"feedback_{field}",
+                )
+            most_useful = st.text_area("¿Qué fue lo más útil? (opcional)", value=current_feedback.get("most_useful", ""), max_chars=1000, height=90)
+            confusing = st.text_area(
+                "¿Qué fue confuso o repetitivo? (opcional)", value=current_feedback.get("confusing_or_repetitive", ""), max_chars=1000, height=90
+            )
+            submitted = st.form_submit_button("Enviar feedback", type="primary", use_container_width=True)
+        if submitted:
+            payload = ratings | {"most_useful": most_useful, "confusing_or_repetitive": confusing}
+            errors = save_student_feedback(payload)
+            if errors:
+                _show_errors(errors, rating_labels | {"feedback": "Feedback"})
+            else:
+                st.session_state.access_notice = "Feedback enviado. El cierre queda ahora en manos del facilitador."
+                st.rerun()
+        return
+
+    if role != "evaluator":
+        st.error("Esta pantalla sólo está disponible para estudiante o evaluador/facilitador.")
+        return
+    if not st.session_state.feedback_submitted:
+        st.warning("El estudiante todavía no ha enviado el feedback. No es posible cerrar la sesión.")
+        return
+
+    current_observations = st.session_state.facilitator_observations
+    st.info("Bloque autenticado del facilitador. Estos controles no son visibles ni editables desde el acceso del estudiante.")
+    with st.form("facilitator_closure_form"):
+        st.subheader("Controles del facilitador")
+        facilitator_code = st.text_input("Código pseudónimo del facilitador", value=current_observations.get("facilitator_code", ""), placeholder="FAC-DEMO-01")
+        check_labels = {
+            "check_completed_without_support": "El recorrido se completó sin asistencia técnica relevante.",
+            "check_evidence_appraised": "Se registró evidencia y se valoró su confiabilidad o relevancia.",
+            "check_coach_non_resolutive": "El AI Coach cuestionó sin resolver ni redactar la decisión.",
+            "check_four_dimensions_comparable": "Existen cuatro dimensiones comparables antes y después.",
+            "check_thinkmark_approved": "La ThinkMark fue revisada y recibió una decisión explícita del estudiante.",
+        }
+        checks = {field: st.checkbox(label, value=bool(current_observations.get(field, False)), key=f"facilitator_{field}") for field, label in check_labels.items()}
+        incidents = st.text_area(
+            "Incidencias técnicas observadas (opcional)", value=current_observations.get("technical_incidents", ""),
+            max_chars=1000, height=80, help="Describe sólo incidencias operativas; no incluyas juicios sobre el estudiante.",
+        )
+        closure_confirmed = st.checkbox("Confirmo que revisé los cinco controles y autorizo el cierre de esta sesión.")
+        close_clicked = st.form_submit_button("Validar controles y cerrar sesión", type="primary", use_container_width=True)
+    if close_clicked:
+        observations = {"facilitator_code": facilitator_code, **checks, "technical_incidents": incidents, "closure_confirmed": closure_confirmed}
+        errors = finalize_session(observations)
+        if errors:
+            _show_errors(errors, check_labels | {
+                "facilitator_code": "Código del facilitador", "technical_incidents": "Incidencias",
+                "closure_confirmed": "Confirmación de cierre", "completion": "Cierre",
+            })
+        else:
+            st.session_state.access_notice = "Controles validados y sesión cerrada de forma inmutable."
+            st.rerun()

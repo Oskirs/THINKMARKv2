@@ -1,0 +1,59 @@
+{
+  "rubric_version": "Reasoning-Delta-v2",
+  "scale": {
+    "1": "Inicial",
+    "2": "En desarrollo",
+    "3": "Fundamentado",
+    "4": "Crítico"
+  },
+  "dimensions": [
+    {
+      "key": "problem",
+      "label": "Definición del problema",
+      "observes": "Precisión para delimitar problema, actores, propósito, condiciones y restricciones.",
+      "control_question": "¿La decisión responde al problema real y reconoce sus condiciones?",
+      "descriptors": {
+        "1": "Describe el reto de forma general o confusa; no identifica elementos esenciales.",
+        "2": "Identifica el problema central, pero omite actores, restricciones o consecuencias relevantes.",
+        "3": "Delimita problema, actores, propósito y restricciones de manera coherente.",
+        "4": "Reformula con precisión; reconoce tensiones, incertidumbre y consecuencias de la delimitación."
+      }
+    },
+    {
+      "key": "evidence",
+      "label": "Uso y valoración de evidencia",
+      "observes": "Capacidad para verificar afirmaciones y valorar confiabilidad, relevancia y suficiencia.",
+      "control_question": "¿La evidencia sostiene la decisión y se explica por qué es pertinente?",
+      "descriptors": {
+        "1": "No aporta evidencia o reproduce afirmaciones sin verificarlas.",
+        "2": "Aporta una fuente o dato, pero explica de forma limitada su calidad o relación con la afirmación.",
+        "3": "Contrasta afirmaciones con evidencia pertinente y explica si confirma, contradice o matiza.",
+        "4": "Triangula evidencia, evalúa credibilidad, relevancia y suficiencia, y reconoce incertidumbre."
+      }
+    },
+    {
+      "key": "ai_critique",
+      "label": "Análisis crítico de IA",
+      "observes": "Agencia para examinar sugerencias de IA, sus supuestos, límites, riesgos y alternativas.",
+      "control_question": "¿El estudiante demuestra juicio propio frente a la recomendación de IA?",
+      "descriptors": {
+        "1": "Acepta o rechaza la respuesta de IA sin examinarla ni justificar.",
+        "2": "Reconoce una posible limitación o pide aclaración, pero realiza poco contraste.",
+        "3": "Contrasta sugerencias con evidencia o alternativas y explica qué acepta, modifica o rechaza.",
+        "4": "Identifica supuestos, sesgos, límites y consecuencias; formula un contraargumento razonado."
+      }
+    },
+    {
+      "key": "decision",
+      "label": "Justificación de decisiones",
+      "observes": "Coherencia entre decisión, evidencia, alternativas, consecuencias y aportación propia.",
+      "control_question": "¿La conclusión se deriva de lo verificado y cuestionado?",
+      "descriptors": {
+        "1": "Expresa una elección sin razones suficientes.",
+        "2": "Ofrece razones generales, débilmente conectadas con evidencia o alternativas.",
+        "3": "Toma una decisión explícita, coherente y sustentada; compara alternativas relevantes.",
+        "4": "Integra evidencia, tensiones, incertidumbre y consecuencias; explicita su aportación intelectual."
+      }
+    }
+  ]
+}

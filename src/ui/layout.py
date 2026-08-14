@@ -26,7 +26,19 @@ def render_sidebar(groups: Mapping[str, Sequence[Any]], current: str, allowed: s
     st.divider()
     st.caption("Sesión actual")
     st.code(st.session_state.session_id, language=None)
-    if st.session_state.reflection_submitted:
+    if st.session_state.completed:
+        if st.session_state.access_role == "evaluator":
+            st.success("Sesión cerrada · vuelve a la cola")
+        else:
+            st.success("Recorrido completo")
+    elif st.session_state.thinkmark_decided:
+        status = "aprobado" if st.session_state.thinkmark_final else "no aprobado"
+        st.success(f"ThinkMark {status} · completa E10")
+    elif st.session_state.thinkmark_draft:
+        st.info("Siguiente acción: E09 · revisar y decidir sobre tu ThinkMark")
+    elif st.session_state.reasoning_evaluation.get("status") == "validated":
+        st.success("Reasoning Delta validado · E08 disponible")
+    elif st.session_state.reflection_submitted:
         st.success("Recorrido enviado · awaiting_review")
     elif st.session_state.decision_completed:
         st.info("Siguiente etapa: E07 · Reflect")

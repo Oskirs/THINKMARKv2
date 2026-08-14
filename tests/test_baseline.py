@@ -69,3 +69,19 @@ def test_repository_rejects_submitted_reflection_overwrite(tmp_path: Path) -> No
     repository.save(submitted)
     with pytest.raises(ValueError, match="reflexión enviada"):
         repository.save(submitted | {"final_responses": {"responses": {"problem": "alterada"}}})
+
+
+def test_repository_rejects_validated_evaluation_overwrite(tmp_path: Path) -> None:
+    repository = LocalSessionRepository(tmp_path / "sessions.json")
+    validated = {
+        "participant_id": "TM-DEMO-026",
+        "session_id": "SES-EVALUATED",
+        "baseline_locked": False,
+        "baseline_snapshot": {},
+        "reflection_submitted": True,
+        "final_responses": {"responses": {"problem": "versión final"}},
+        "reasoning_evaluation": {"status": "validated", "integrity_hash": "abc"},
+    }
+    repository.save(validated)
+    with pytest.raises(ValueError, match="evaluación validada"):
+        repository.save(validated | {"reasoning_evaluation": {"status": "validated", "integrity_hash": "otro"}})
