@@ -181,7 +181,12 @@ def apply_brand() -> None:
     st.markdown(build_brand_css(get_brand()), unsafe_allow_html=True)
 
 
-def render_brand_header(*, compact: bool = False) -> None:
+def runtime_status_label(uses_supabase: bool) -> str:
+    """Distingue visualmente una demostración local del piloto conectado."""
+    return "PILOTO CONTROLADO" if uses_supabase else "MODO DEMOSTRACIÓN"
+
+
+def render_brand_header(*, compact: bool = False, status_label: str = "MODO DEMOSTRACIÓN") -> None:
     brand = get_brand()
     logo = ROOT / brand["logo_path"]
     if compact:
@@ -200,4 +205,7 @@ def render_brand_header(*, compact: bool = False) -> None:
             st.title(brand["app_name"])
         st.markdown(f"<div class='tm-tagline'>{brand['tagline']}</div>", unsafe_allow_html=True)
     with right:
-        st.markdown("<div style='text-align:right'><span class='tm-badge'>MODO DEMOSTRACIÓN</span></div>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div style='text-align:right'><span class='tm-badge'>{status_label}</span></div>",
+            unsafe_allow_html=True,
+        )

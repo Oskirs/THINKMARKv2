@@ -66,7 +66,10 @@ def render_access_portal() -> None:
 def render_review_queue() -> None:
     st.markdown("<div class='tm-eyebrow'>ACCESO INTERNO · EVALUACIÓN</div>", unsafe_allow_html=True)
     st.title("Selecciona una sesión asignada")
-    st.warning("En Supabase, cada evaluador sólo verá las sesiones que le fueron asignadas. En el modo local se muestran las sesiones de prueba disponibles.")
+    if load_settings().uses_supabase:
+        st.info("Cada evaluador sólo puede consultar las sesiones que le fueron asignadas.")
+    else:
+        st.warning("Modo local de demostración: se muestran las sesiones de prueba disponibles.")
     repository = get_session_repository()
     records = [
         record for record in repository.list_for_evaluator(st.session_state.internal_user_id)

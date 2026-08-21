@@ -9,7 +9,7 @@ from src.infrastructure.settings import ConfigurationError, load_settings
 from src.screens.access import ROLE_LABELS, render_access_portal, render_review_queue
 from src.services.academic_cases import case_for_session
 from src.services.journey import allowed_screen_ids, ensure_journey_state, go_to_screen, reset_access_state, resolve_screen_access
-from src.ui.brand import apply_brand, render_brand_header
+from src.ui.brand import apply_brand, render_brand_header, runtime_status_label
 from src.ui.layout import render_progress, render_sidebar
 
 
@@ -31,14 +31,21 @@ except ConfigurationError as exc:
     st.info("La aplicación se detuvo para evitar usar almacenamiento local por accidente en una publicación multiusuario.")
     st.stop()
 
+status_label = runtime_status_label(runtime_settings.uses_supabase)
+release_caption = (
+    "Piloto controlado THINKMARK v2"
+    if runtime_settings.uses_supabase
+    else "Prototipo THINKMARK v2 · Paso 6.8.3"
+)
+
 if not st.session_state.access_role:
-    render_brand_header()
+    render_brand_header(status_label=status_label)
     render_access_portal()
-    st.caption("Prototipo THINKMARK v2 · Paso 6.8.3 · Catálogo UAG y casos por perfil académico")
+    st.caption(f"{release_caption} · Catálogo UAG y casos por perfil académico")
     st.stop()
 
 if st.session_state.access_role == "evaluator" and not st.session_state.internal_session_loaded:
-    render_brand_header()
+    render_brand_header(status_label=status_label)
     render_review_queue()
     if st.button("Cerrar acceso interno"):
         reset_access_state()
@@ -67,13 +74,13 @@ with st.sidebar:
         go_to_screen(selected)
         st.rerun()
 
-render_brand_header()
+render_brand_header(status_label=status_label)
 render_progress(st.session_state.current_screen)
 
 screen = get_screen(st.session_state.current_screen)
 screen.renderer(demo_case)
 
 st.caption(
-    "Prototipo THINKMARK v2 · Paso 6.8.3 · Escuela, carrera, semestre y caso adaptado · "
+    f"{release_caption} · Escuela, carrera, semestre y caso adaptado · "
     "La actividad no asigna calificación."
 )

@@ -3,7 +3,8 @@
 from pathlib import Path
 
 from src.domain.thinkmark import THINKMARK_LABELS
-from src.ui.brand import build_brand_css, get_brand
+from src.ui.brand import build_brand_css, get_brand, runtime_status_label
+from src.ui.layout import role_uses_session_context
 from src.ui.language import load_language_config
 
 
@@ -73,3 +74,20 @@ def test_student_interface_removed_unexplained_advanced_phrases() -> None:
 def test_thinkmark_labels_use_clear_student_facing_language() -> None:
     assert THINKMARK_LABELS["tm_problem_reframed"] == "Cómo entiendes el problema al final"
     assert THINKMARK_LABELS["tm_remaining_limits"] == "Lo que todavía falta saber"
+
+
+def test_runtime_status_distinguishes_pilot_from_local_demo() -> None:
+    assert runtime_status_label(True) == "PILOTO CONTROLADO"
+    assert runtime_status_label(False) == "MODO DEMOSTRACIÓN"
+
+
+def test_teacher_sidebar_does_not_show_student_session_context() -> None:
+    assert role_uses_session_context("student")
+    assert role_uses_session_context("evaluator")
+    assert not role_uses_session_context("teacher")
+
+
+def test_faculty_dashboard_title_is_consistently_in_spanish() -> None:
+    source = (ROOT / "src/screens/faculty.py").read_text(encoding="utf-8")
+    assert "Dashboard docente de aprendizaje" in source
+    assert "Faculty Learning Dashboard" not in source

@@ -8,6 +8,11 @@ from typing import Any
 import streamlit as st
 
 
+def role_uses_session_context(role: str) -> bool:
+    """El profesor trabaja con agregados y no tiene una sesión estudiantil activa."""
+    return role in {"student", "evaluator"}
+
+
 def render_sidebar(groups: Mapping[str, Sequence[Any]], current: str, allowed: set[str]) -> str:
     st.markdown("#### Recorrido")
     options = [screen.screen_id for screens in groups.values() for screen in screens if screen.screen_id in allowed]
@@ -23,6 +28,8 @@ def render_sidebar(groups: Mapping[str, Sequence[Any]], current: str, allowed: s
         format_func=labels.get,
         label_visibility="collapsed",
     )
+    if not role_uses_session_context(st.session_state.access_role):
+        return selected
     st.divider()
     st.caption("Sesión actual")
     st.code(st.session_state.session_id, language=None)

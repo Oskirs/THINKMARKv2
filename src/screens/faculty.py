@@ -34,7 +34,7 @@ def render_d01(data: dict[str, Any]) -> None:
     if st.session_state.access_role != "teacher" or not st.session_state.internal_authenticated:
         st.error("Se requiere acceso autenticado de profesor.")
         return
-    screen_title("D01", "Faculty Learning Dashboard", "Convierte evidencia agregada en una oportunidad específica para intervenir.")
+    screen_title("D01", "Dashboard docente de aprendizaje", "Convierte evidencia agregada en una oportunidad específica para intervenir.")
     if st.session_state.access_notice:
         st.info(st.session_state.pop("access_notice"))
     st.success("Vista separada para el rol docente. El código estudiantil no permite abrir este dashboard.")
