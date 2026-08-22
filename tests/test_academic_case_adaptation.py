@@ -19,14 +19,18 @@ from src.services.academic_cases import (
 
 def test_catalog_exposes_program_and_semester_menus() -> None:
     catalog = load_academic_catalog()
-    assert catalog["catalog_version"] == "THINKMARK-UAG-GDL-v2"
+    assert catalog["catalog_version"] == "THINKMARK-UAG-GDL-v2.1"
     assert catalog["source"]["url"] == "https://www.uag.mx/es/profesional"
     assert len(area_options()) == 8
-    assert len(program_options()) == 42
+    assert len(program_options()) == 43
     assert set(semester_options().values()) == {1, 5, 7}
     assert "Otra carrera / caso transversal" in program_options("transversal")
     assert "Ingeniería en Mecatrónica" in program_options("ingenierias_agroindustria")
     assert "Ciencias de la Nutrición" in program_options("salud")
+    assert (
+        program_options("industrias_creativas")["Ciencias de la Comunicación y Medios Digitales"]
+        == "ciencias_comunicacion_medios_digitales"
+    )
 
 
 def test_selection_requires_both_profile_fields() -> None:
@@ -51,8 +55,8 @@ def test_case_changes_by_program_and_semester() -> None:
 def test_all_catalog_profiles_build_the_three_pilot_variants() -> None:
     profiles = program_options()
     built = [build_case_for_profile(program_id, semester) for program_id in profiles.values() for semester in (1, 5, 7)]
-    assert len(built) == 126
-    assert len({case["case_version"] for case in built}) == 126
+    assert len(built) == 129
+    assert len({case["case_version"] for case in built}) == 129
     assert all(len(case["facts"]) == 4 for case in built)
 
 
@@ -61,7 +65,7 @@ def test_profile_records_version_and_readable_labels() -> None:
     assert profile["program_label"] == "Ciencias de la Nutrición"
     assert profile["area"] == "Escuela de Medicina y Ciencias de la Salud"
     assert profile["semester_label"] == "7.º semestre"
-    assert profile["catalog_version"] == "THINKMARK-UAG-GDL-v2"
+    assert profile["catalog_version"] == "THINKMARK-UAG-GDL-v2.1"
 
 
 def test_session_uses_its_frozen_case_snapshot() -> None:

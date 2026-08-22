@@ -41,6 +41,9 @@ def test_brand_has_explicit_light_inputs_and_mobile_layout() -> None:
     assert "font-size: 16px !important" in css
     assert "min-height: 44px !important" in css
     assert "min-width: 100%" in css
+    assert ".tm-case-label" in css
+    assert 'button[kind="primary"]' in css
+    assert "[data-testid=\"stExpander\"] summary" in css
 
 
 def test_brand_text_contrast_exceeds_normal_text_requirement() -> None:
@@ -69,6 +72,24 @@ def test_student_interface_removed_unexplained_advanced_phrases() -> None:
         "Human Reasoning Signature",
     )
     assert not any(phrase in source for phrase in forbidden)
+
+
+def test_student_fields_show_preventive_counts_and_reduced_open_questions() -> None:
+    source = (ROOT / "src/screens/student.py").read_text(encoding="utf-8")
+    assert "Necesitas al menos {minimum} caracteres. Actualmente: {count}/{minimum}." in source
+    assert "_counted_text_area" in source
+    assert 'st.form("baseline_form"' not in source
+    assert "disabled=not baseline_ready" in source
+    assert "disabled=not reflection_ready" in source
+    assert "¿Qué cambió, aprendiste o aportaste tú?" not in source
+    assert "¿Qué aprendiste?" not in source
+
+
+def test_dashboard_exposes_non_grading_fatigue_indicators() -> None:
+    source = (ROOT / "src/screens/faculty.py").read_text(encoding="utf-8")
+    assert "Carga y posible fatiga del recorrido" in source
+    assert "Sin completar" in source
+    assert "Caracteres promedio" in source
 
 
 def test_thinkmark_labels_use_clear_student_facing_language() -> None:

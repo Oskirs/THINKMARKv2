@@ -71,17 +71,28 @@ def render_review_queue() -> None:
     else:
         st.warning("Modo local de demostración: se muestran las sesiones de prueba disponibles.")
     repository = get_session_repository()
-    records = [
-        record for record in repository.list_for_evaluator(st.session_state.internal_user_id)
-        if record.get("reflection_submitted")
-    ]
+    activity_sessions = repository.list_activity_sessions_for_evaluator(st.session_state.internal_user_id)
+    if not activity_sessions:
+        st.info("No hay sesiones grupales asignadas a esta cuenta.")
+        return
+    activity_sessions.sort(key=lambda item: item.get("created_at", ""), reverse=True)
+    sessions_by_code = {item["session_code"]: item for item in activity_sessions}
+    selected_code = st.selectbox(
+        "Sesión del grupo",
+        list(sessions_by_code),
+        format_func=lambda code: f"{code} · {sessions_by_code[code]['title']} · {sessions_by_code[code].get('status', 'sin estado')}",
+    )
+    selected_session = sessions_by_code[selected_code]
+    all_records = repository.list_participants(selected_session["activity_session_id"])
+    records = [record for record in all_records if record.get("reflection_submitted")]
+    st.caption(f"{len(all_records)} participante(s) registrados · {len(records)} enviado(s) a evaluación")
     if not records:
-        st.info("No hay sesiones enviadas a evaluación.")
+        st.info("Esta sesión todavía no tiene participantes listos para evaluación.")
         return
     records.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
     by_code = {record["participant_id"]: record for record in records}
     selected = st.selectbox(
-        "Código de la sesión",
+        "Participante",
         list(by_code),
         format_func=lambda code: (
             f"{code} · {by_code[code].get('academic_profile', {}).get('program_label', 'Transversal')} · "
@@ -89,7 +100,7 @@ def render_review_queue() -> None:
             f"{'Delta validado' if by_code[code].get('reasoning_evaluation', {}).get('status') == 'validated' else 'por evaluar'}"
         ),
     )
-    if st.button("Abrir sesión", type="primary", use_container_width=True):
-        if load_session_for_review(selected):
+    if st.button("Abrir respuestas del participante", type="primary", use_container_width=True):
+        if load_session_for_review(selected, selected_session["activity_session_id"]):
             st.rerun()
-        st.error("La sesión ya no está disponible para revisión.")
+        st.error("Las respuestas ya no están disponibles para revisión.")

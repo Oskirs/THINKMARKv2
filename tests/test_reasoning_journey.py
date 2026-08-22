@@ -66,3 +66,22 @@ def test_decision_and_reflection_require_human_tradeoff_and_comparable_evidence(
         "next_step": "Diseñaría una auditoría por subgrupos y una revisión con participación estudiantil.",
     }
     assert validate_reflection(reflection, 4) == {}
+
+
+def test_reduced_decision_and_reflection_do_not_require_duplicate_fields() -> None:
+    decision = {
+        "decision_type": "modificar",
+        "change": "Mantendría el piloto, pero eliminaría decisiones automáticas y exigiría revisión humana en cada alerta.",
+        "key_evidence": "Los falsos positivos cambian entre programas; este dato pesa porque una intervención incorrecta puede causar daño.",
+        "tradeoff": "Acepto un proceso más lento a cambio de mayor revisión, explicación y posibilidad de corregir errores.",
+    }
+    reflection = {
+        "problem": "El problema es ofrecer apoyo temprano sin convertir correlaciones imperfectas en etiquetas permanentes.",
+        "evidence": "Los falsos positivos por programa permiten sostener que la alerta requiere revisión antes de intervenir.",
+        "ai_critique": "La IA puede confundir menor actividad digital con desinterés y omitir diferencias de contexto.",
+        "decision": "Aplicaría un piloto voluntario porque permite comprobar resultados sin automatizar decisiones sensibles.",
+        "change": "Incorporé revisión humana y derecho de aclaración como condiciones definidas por mi propio criterio.",
+        "uncertainty": "Falta medir el efecto real del apoyo; el siguiente paso sería comparar resultados entre programas.",
+    }
+    assert validate_decision(decision) == {}
+    assert validate_reflection(reflection, 4) == {}

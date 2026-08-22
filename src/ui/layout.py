@@ -32,7 +32,9 @@ def render_sidebar(groups: Mapping[str, Sequence[Any]], current: str, allowed: s
         return selected
     st.divider()
     st.caption("Sesión actual")
-    st.code(st.session_state.session_id, language=None)
+    if st.session_state.session_code:
+        st.markdown(f"**Grupo:** `{st.session_state.session_code}`")
+    st.markdown(f"**Participante:** `{st.session_state.participant_id or 'sin registrar'}`")
     if st.session_state.completed:
         if st.session_state.access_role == "evaluator":
             st.success("Sesión cerrada · vuelve a la cola")

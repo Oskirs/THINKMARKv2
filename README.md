@@ -42,7 +42,7 @@ diseño responsive y lenguaje claro para estudiantes de licenciatura.
 - Política versionada de lenguaje claro y glosario breve dentro del recorrido estudiantil.
 - Guía de accesibilidad y redacción para validar nuevos casos antes de publicarlos.
 - Menús jerárquicos de escuela, carrera y semestre en E01.
-- Catálogo presencial UAG Guadalajara con 41 programas, una opción transversal y 126 variantes para 1.º, 5.º y 7.º.
+- Catálogo presencial UAG Guadalajara con 42 programas, una opción transversal y 129 variantes para 1.º, 5.º y 7.º.
 - Caso y nivel de complejidad fijados con la sesión para conservar trazabilidad al reingresar.
 
 ## Ejecutar localmente
@@ -86,6 +86,14 @@ La configuración desacoplada está en `config/ai_coach.json`. El modelo predete
 puede sobrescribirse con `OPENAI_MODEL` sin cambiar el código.
 
 ## Persistencia y modos de operación
+
+El ajuste 7.3.1 añade sesiones grupales con código `TM-XXXXXX`, vínculo explícito de cada
+recorrido y selección del evaluador por sesión y participante. La operación y migración están
+documentadas en `GUIA_PASO_7_3_1_SESIONES.md`.
+
+Los ajustes 7.3.2 a 7.3.5 incorporan contadores preventivos, conservación de borradores,
+preguntas conceptualmente delimitadas, menos respuestas abiertas e indicadores agregados de
+posible fatiga. Se documentan en `GUIA_AJUSTES_7_3_2_A_7_3_5.md`.
 
 Las sesiones se guardan en `data/runtime/sessions.json`; la carpeta está excluida de
 Git cuando `PERSISTENCE_MODE = "local"`. Este modo sirve para una demostración controlada,

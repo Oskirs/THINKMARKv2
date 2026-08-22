@@ -7,6 +7,7 @@ from typing import Any
 import streamlit as st
 
 from src.ai.coach import load_coach_config
+from src.domain.activity_session import validate_session_code
 from src.domain.baseline import MIN_RESPONSE_CHARS, validate_baseline, validate_participant_code
 from src.domain.thinkmark import THINKMARK_FIELDS, THINKMARK_LABELS
 from src.services.academic_cases import (
@@ -35,6 +36,7 @@ from src.services.journey import (
     resume_screen_id,
     start_coach,
     submit_coach_turn,
+    track_screen_visit,
     unload_review_session,
 )
 from src.ui.layout import card, screen_title
@@ -50,6 +52,35 @@ def _show_errors(errors: dict[str, str], labels: dict[str, str]) -> None:
 def _show_access_notice() -> None:
     if st.session_state.access_notice:
         st.info(st.session_state.pop("access_notice"))
+
+
+def _counted_text_area(
+    label: str,
+    *,
+    value: str,
+    minimum: int,
+    key: str,
+    height: int = 110,
+    disabled: bool = False,
+    help: str | None = None,
+    placeholder: str | None = None,
+) -> str:
+    text = st.text_area(
+        label,
+        value=value,
+        height=height,
+        disabled=disabled,
+        help=help,
+        placeholder=placeholder,
+        key=key,
+    )
+    if not disabled:
+        count = len(text.strip())
+        if count < minimum:
+            st.caption(f"Necesitas al menos {minimum} caracteres. Actualmente: {count}/{minimum}.")
+        else:
+            st.caption(f"Extensión suficiente: {count}/{minimum} caracteres.")
+    return text
 
 
 def render_e01(data: dict[str, Any]) -> None:
@@ -75,6 +106,7 @@ def render_e01(data: dict[str, Any]) -> None:
                 f"**Nivel del caso:** {profile.get('complexity_label', 'General')}"
             )
             st.caption("El perfil y el caso quedaron fijados para que tu recorrido sea comparable de principio a fin.")
+            st.text_input("Código de sesión", value=st.session_state.session_code, disabled=True)
             st.text_input("Código de participante", value=st.session_state.participant_id, disabled=True)
             accepted_at = st.session_state.consent_record.get("accepted_at", "")
             st.caption(f"Aceptación registrada: {accepted_at[:19].replace('T', ' ')} UTC")
@@ -116,19 +148,33 @@ def render_e01(data: dict[str, Any]) -> None:
                 key="academic_semester_widget",
             )
             with st.form("access_form", clear_on_submit=False):
-                st.caption("Usa únicamente el código entregado por el facilitador. No escribas nombre, matrícula, grupo ni correo.")
-                participant_code = st.text_input("Código de participante", placeholder="Ejemplo: TM-DEMO-024", max_chars=20)
+                st.caption("Escribe los dos códigos entregados por el facilitador. No uses nombre, matrícula, grupo ni correo.")
+                session_code = st.text_input(
+                    "Código de sesión",
+                    placeholder="Ejemplo: TM-AB12CD",
+                    max_chars=9,
+                    help="Es el mismo código para todo el grupo.",
+                )
+                participant_code = st.text_input(
+                    "Código anónimo de participante",
+                    placeholder="Ejemplo: ALU-024",
+                    max_chars=20,
+                    help="Este código identifica únicamente tu avance dentro de la actividad.",
+                )
                 voluntary = st.checkbox("Mi participación en esta prueba es voluntaria.")
                 non_graded = st.checkbox("Entiendo que esta actividad no asigna calificación.")
                 anonymized = st.checkbox("Autorizo el uso anonimizado de mis respuestas para evaluar y mejorar el prototipo.")
                 submitted = st.form_submit_button("Aceptar y comenzar", type="primary", use_container_width=True)
             if submitted:
+                normalized_session, session_error = validate_session_code(session_code)
                 normalized, code_error = validate_participant_code(participant_code)
                 program_id = programs.get(program_label or "")
                 semester = semesters.get(semester_label or "")
                 profile_errors = validate_academic_selection(program_id, semester)
-                if code_error or profile_errors or not all((voluntary, non_graded, anonymized)):
+                if session_error or code_error or profile_errors or not all((voluntary, non_graded, anonymized)):
                     st.error("Revisa la información antes de comenzar:")
+                    if session_error:
+                        st.markdown(f"- **Código de sesión:** {session_error}")
                     if code_error:
                         st.markdown(f"- **Código de participante:** {code_error}")
                     for message in profile_errors.values():
@@ -138,9 +184,13 @@ def render_e01(data: dict[str, Any]) -> None:
                 else:
                     profile = build_academic_profile(program_id, semester)
                     assigned_case = build_case_for_profile(program_id, semester)
-                    resumed = create_or_resume_session(normalized, profile, assigned_case)
-                    go_to_screen(resume_screen_id() if resumed else "E02")
-                    st.rerun()
+                    try:
+                        resumed = create_or_resume_session(normalized_session, normalized, profile, assigned_case)
+                    except ValueError as exc:
+                        st.error(str(exc))
+                    else:
+                        go_to_screen(resume_screen_id() if resumed else "E02")
+                        st.rerun()
     with col2:
         card("Duración estimada", "25–35 minutos")
         card("Privacidad", "La demostración no solicita nombre, matrícula ni correo.")
@@ -152,6 +202,7 @@ def render_e01(data: dict[str, Any]) -> None:
 
 
 def render_e02(data: dict[str, Any]) -> None:
+    track_screen_visit("E02")
     screen_title("E02", "Caso y primera respuesta", "Explica qué piensas antes de conversar con el AI Coach. Esta será tu referencia inicial.")
     if st.session_state.access_notice:
         st.info(st.session_state.pop("access_notice"))
@@ -162,6 +213,7 @@ def render_e02(data: dict[str, Any]) -> None:
             f"{profile.get('semester_label', '')}</span>",
             unsafe_allow_html=True,
         )
+    st.markdown("<div class='tm-case-label'>CASO</div>", unsafe_allow_html=True)
     st.subheader(data["title"])
     st.write(data["context"])
     if data.get("analysis_focus"):
@@ -170,7 +222,7 @@ def render_e02(data: dict[str, Any]) -> None:
         for fact in data["facts"]:
             st.markdown(f"- {fact}")
     st.markdown(f"<div class='tm-question'><strong>Pregunta central</strong><br>{data['central_question']}</div>", unsafe_allow_html=True)
-    st.warning("Responde con tus propias palabras. El AI Coach se habilitará cuando guardes esta primera respuesta como tu punto de partida.")
+    st.warning("Responde con tus propias palabras. Para continuar, cada respuesta debe tener al menos 40 caracteres. Si falta texto, tu borrador se conserva.")
     render_term_guide("evidence", "assumption")
 
     labels = [
@@ -195,29 +247,31 @@ def render_e02(data: dict[str, Any]) -> None:
             st.rerun()
         return
 
-    with st.form("baseline_form", clear_on_submit=False):
-        cols = st.columns(2)
-        responses: dict[str, str] = {}
-        for idx, (label, key, help_text) in enumerate(labels):
-            responses[key] = cols[idx % 2].text_area(
+    cols = st.columns(2)
+    responses: dict[str, str] = {}
+    for idx, (label, key, help_text) in enumerate(labels):
+        with cols[idx % 2]:
+            responses[key] = _counted_text_area(
                 label,
                 value=current.get(key, ""),
+                minimum=MIN_RESPONSE_CHARS,
                 height=145,
-                help=f"{help_text} Mínimo orientativo: {MIN_RESPONSE_CHARS} caracteres.",
+                help=help_text,
                 key=f"baseline_{key}",
             )
-        confidence_value = st.slider(
-            "¿Qué tanta confianza tienes ahora en tu decisión?",
-            1,
-            5,
-            value=confidence,
-            help="1 = muy baja · 5 = muy alta",
-            key="baseline_confidence_widget",
-        )
-        freeze_confirmed = st.checkbox("Entiendo que esta respuesta será mi punto de partida y ya no podré modificarla.")
-        save_col, close_col = st.columns(2)
-        save_clicked = save_col.form_submit_button("Guardar borrador", use_container_width=True)
-        close_clicked = close_col.form_submit_button("Guardar mi primera respuesta", type="primary", use_container_width=True)
+    confidence_value = st.slider(
+        "¿Qué tanta confianza tienes ahora en tu decisión?",
+        1,
+        5,
+        value=confidence,
+        help="1 = muy baja · 5 = muy alta",
+        key="baseline_confidence_widget",
+    )
+    freeze_confirmed = st.checkbox("Entiendo que esta respuesta será mi punto de partida y ya no podré modificarla.")
+    baseline_ready = all(len(value.strip()) >= MIN_RESPONSE_CHARS for value in responses.values()) and freeze_confirmed
+    save_col, close_col = st.columns(2)
+    save_clicked = save_col.button("Guardar borrador", use_container_width=True)
+    close_clicked = close_col.button("Guardar mi primera respuesta", type="primary", use_container_width=True, disabled=not baseline_ready)
 
     if save_clicked:
         save_baseline_draft(responses, confidence_value)
@@ -239,6 +293,7 @@ def render_e02(data: dict[str, Any]) -> None:
 
 
 def render_e03(data: dict[str, Any]) -> None:
+    track_screen_visit("E03")
     screen_title("E03", "AI Coach", "Responde preguntas breves para revisar mejor tus razones. El Coach no responde por ti.")
     _show_access_notice()
     config = load_coach_config()
@@ -294,27 +349,27 @@ def render_e03(data: dict[str, Any]) -> None:
 
     active_turn = turns[-1]
     at_limit = len(turns) >= int(config["max_turns"])
-    with st.form(f"coach_turn_form_{active_turn.get('turn_number', len(turns))}"):
-        response = st.text_area(
-            "Tu razonamiento",
-            value=current.get("response", "") if current.get("turn_number") == active_turn.get("turn_number") else "",
-            height=140,
-            placeholder="Escribe con tus propias palabras; el sistema no completará el texto por ti.",
-            help=f"Desarrolla al menos {config['minimum_response_chars']} caracteres.",
-        )
-        claim = st.text_area(
-            "Afirmación que quieres verificar al terminar",
-            value=current.get("claim_to_verify", data["verification"]["claim"]),
-            height=90,
-            help="Se requiere únicamente para cerrar el Coach y pasar a Verify.",
-        )
-        next_col, close_col = st.columns(2)
-        next_clicked = next_col.form_submit_button(
-            "Enviar y recibir otra pregunta",
-            use_container_width=True,
-            disabled=at_limit,
-        )
-        close_clicked = close_col.form_submit_button("Cerrar Coach y continuar", type="primary", use_container_width=True)
+    response = _counted_text_area(
+        "Tu razonamiento",
+        value=current.get("response", "") if current.get("turn_number") == active_turn.get("turn_number") else "",
+        minimum=int(config["minimum_response_chars"]),
+        height=140,
+        placeholder="Escribe con tus propias palabras; el sistema no completará el texto por ti.",
+        key=f"coach_response_{active_turn.get('turn_number', len(turns))}",
+    )
+    claim = _counted_text_area(
+        "Afirmación que quieres verificar al terminar",
+        value=current.get("claim_to_verify", data["verification"]["claim"]),
+        minimum=20,
+        height=90,
+        help="Sólo se requiere para cerrar el Coach y pasar a Verify.",
+        key=f"coach_claim_{active_turn.get('turn_number', len(turns))}",
+    )
+    next_col, close_col = st.columns(2)
+    response_ready = len(response.strip()) >= int(config["minimum_response_chars"])
+    claim_ready = len(claim.strip()) >= 20
+    next_clicked = next_col.button("Enviar y recibir otra pregunta", use_container_width=True, disabled=at_limit or not response_ready)
+    close_clicked = close_col.button("Cerrar Coach y continuar", type="primary", use_container_width=True, disabled=not (response_ready and claim_ready))
     if at_limit:
         st.caption("Alcanzaste el máximo de preguntas. Responde la actual y cierra el Coach para continuar.")
     if next_clicked or close_clicked:
@@ -338,32 +393,47 @@ def render_e03(data: dict[str, Any]) -> None:
 
 
 def render_e04(data: dict[str, Any]) -> None:
-    screen_title("E04", "Verify · Revisa una afirmación", "Consulta una fuente y explica si apoya, contradice o cambia lo que pensabas.")
+    track_screen_visit("E04")
+    screen_title("E04", "Verify · Contrasta una afirmación", "Consulta una fuente y decide qué efecto tiene sobre tu razonamiento inicial.")
     _show_access_notice()
-    st.caption("La aplicación sólo revisa que la liga tenga un formato válido. Tú debes explicar por qué la fuente sirve para esta actividad.")
+    st.info(
+        "En esta etapa compararás una afirmación de tu decisión inicial con una fuente. No buscamos una respuesta correcta: "
+        "queremos saber si la información confirma, modifica o cuestiona lo que pensabas."
+    )
+    st.caption("La aplicación valida el formato de la liga; tú explicas por qué la fuente es útil y qué cambia después de revisarla.")
     render_term_guide("evidence")
     current = st.session_state.verification_draft or {"claim": st.session_state.claim_to_verify}
     read_only = st.session_state.reflection_submitted
-    with st.form("verification_form"):
-        claim = st.text_area("Afirmación seleccionada", value=current.get("claim", ""), height=85, disabled=read_only)
-        col1, col2 = st.columns(2)
-        title = col1.text_input("Título de la fuente", value=current.get("source_title", ""), disabled=read_only)
-        source_type_options = ["Académica", "Institucional", "Periodística", "Datos", "Otra"]
-        source_type_value = current.get("source_type", "Académica")
-        source_type = col2.selectbox("Tipo de fuente", source_type_options, index=source_type_options.index(source_type_value) if source_type_value in source_type_options else 0, disabled=read_only)
-        url = st.text_input("URL de la fuente", value=current.get("source_url", ""), placeholder="https://…", disabled=read_only)
-        assessment_options = ["confirma", "contradice", "matiza", "no es comprobable"]
-        assessment_value = current.get("assessment", "matiza")
-        assessment = st.selectbox("¿Qué hace la fuente respecto de la afirmación?", assessment_options, index=assessment_options.index(assessment_value), disabled=read_only)
-        reliability = st.text_area("¿Por qué esta fuente sirve para revisar la afirmación?", value=current.get("reliability_reason", ""), height=110, disabled=read_only, help="Considera quién la publica, qué datos presenta y si explica sus límites.")
-        impact = st.text_area("Después de revisar la fuente, ¿qué cambia o se confirma en tu decisión?", value=current.get("impact", ""), height=110, disabled=read_only)
-        limitation = st.text_area("¿Qué limitación tiene la fuente o su acceso? (opcional)", value=current.get("access_limitation", ""), height=75, disabled=read_only)
-        if not read_only:
-            save_col, complete_col = st.columns(2)
-            save_clicked = save_col.form_submit_button("Guardar borrador", use_container_width=True)
-            complete_clicked = complete_col.form_submit_button("Completar Verify", type="primary", use_container_width=True)
-        else:
-            save_clicked = complete_clicked = False
+    claim = st.text_area("Afirmación que vas a revisar", value=current.get("claim", ""), height=85, disabled=read_only, key="verify_claim")
+    col1, col2 = st.columns(2)
+    title = col1.text_input("Título de la fuente", value=current.get("source_title", ""), disabled=read_only, key="verify_title")
+    source_type_options = ["Académica", "Institucional", "Periodística", "Datos", "Otra"]
+    source_type_value = current.get("source_type", "Académica")
+    source_type = col2.selectbox("Tipo de fuente", source_type_options, index=source_type_options.index(source_type_value) if source_type_value in source_type_options else 0, disabled=read_only, key="verify_source_type")
+    url = st.text_input("Liga completa de la fuente", value=current.get("source_url", ""), placeholder="https://…", disabled=read_only, key="verify_url")
+    assessment_options = ["confirma", "contradice", "matiza", "no permite comprobar"]
+    stored_assessment = current.get("assessment", "matiza")
+    if stored_assessment == "no es comprobable":
+        stored_assessment = "no permite comprobar"
+    assessment_label = st.selectbox("Después de leerla, la fuente…", assessment_options, index=assessment_options.index(stored_assessment), disabled=read_only, key="verify_assessment")
+    assessment = "no es comprobable" if assessment_label == "no permite comprobar" else assessment_label
+    reliability = _counted_text_area(
+        "¿Qué dato de la fuente utilizaste y por qué es confiable o útil?",
+        value=current.get("reliability_reason", ""), minimum=40, height=110, disabled=read_only,
+        help="Menciona quién publica la fuente, qué información presenta o qué límite reconoce.", key="verify_reliability",
+    )
+    impact = _counted_text_area(
+        "¿Qué parte de tu decisión se confirma, cambia o queda en duda? Explica por qué.",
+        value=current.get("impact", ""), minimum=40, height=110, disabled=read_only, key="verify_impact",
+    )
+    limitation = current.get("access_limitation", "")
+    if not read_only:
+        save_col, complete_col = st.columns(2)
+        save_clicked = save_col.button("Guardar borrador", use_container_width=True, key="verify_save")
+        verify_ready = all((len(claim.strip()) >= 20, len(title.strip()) >= 5, bool(url.strip()), len(reliability.strip()) >= 40, len(impact.strip()) >= 40))
+        complete_clicked = complete_col.button("Validar y continuar", type="primary", use_container_width=True, key="verify_complete", disabled=not verify_ready)
+    else:
+        save_clicked = complete_clicked = False
     payload = {
         "claim": claim,
         "source_title": title,
@@ -388,34 +458,55 @@ def render_e04(data: dict[str, Any]) -> None:
 
 
 def render_e05(data: dict[str, Any]) -> None:
-    screen_title("E05", "Challenge · Límites y otras opciones", "Identifica qué podría faltar en la propuesta de IA y plantea otra forma de actuar.")
+    track_screen_visit("E05")
+    screen_title("E05", "Challenge · Revisa límites y opciones", "Señala qué falta, qué se está suponiendo y qué otra opción sería posible.")
     _show_access_notice()
+    st.info(
+        "Ahora pondrás a prueba tu decisión. Elige el principal límite que detectaste, explica qué falta comprobar "
+        "y propone una opción que responda mejor a ese límite. No necesitas encontrar una respuesta perfecta."
+    )
     render_term_guide("assumption", "counterargument")
     verified = st.session_state.verifications[0]
     st.markdown(f"<div class='tm-question'><strong>Afirmación examinada</strong><br>{verified['claim']}<br><br><strong>Resultado de Verify</strong><br>{verified['assessment']}: {verified['impact']}</div>", unsafe_allow_html=True)
     current = st.session_state.challenge_draft
     read_only = st.session_state.reflection_submitted
-    with st.form("challenge_form"):
-        cols = st.columns(2)
-        limitation = cols[0].text_area("¿Qué podría estar incompleto o faltar?", value=current.get("limitation", ""), height=115, disabled=read_only, help="Piensa en una condición, persona o consecuencia que no se consideró.")
-        assumption = cols[1].text_area("¿Qué se está dando por cierto sin comprobar?", value=current.get("assumption", ""), height=115, disabled=read_only)
-        missing = cols[0].text_area("¿Qué información adicional necesitas?", value=current.get("missing_evidence", ""), height=115, disabled=read_only)
-        alternative = cols[1].text_area("¿Qué otra opción propones?", value=current.get("alternative", ""), height=115, disabled=read_only)
-        counterargument = st.text_area("¿Qué razón válida daría alguien que no está de acuerdo? (opcional si escribiste otra opción)", value=current.get("counterargument", ""), height=100, disabled=read_only)
-        if not read_only:
-            save_col, complete_col = st.columns(2)
-            save_clicked = save_col.form_submit_button("Guardar borrador", use_container_width=True)
-            complete_clicked = complete_col.form_submit_button("Completar Challenge", type="primary", use_container_width=True)
-        else:
-            save_clicked = complete_clicked = False
-    payload = {"reference_claim": verified["claim"], "limitation": limitation, "assumption": assumption, "missing_evidence": missing, "alternative": alternative, "counterargument": counterargument}
+    focus_options = ["Falta información", "Se asumió algo sin comprobar", "Falta una perspectiva", "No se consideró una consecuencia"]
+    stored_focus = current.get("assumption", focus_options[0])
+    focus = st.selectbox(
+        "1. ¿Qué tipo de límite es el más importante?",
+        focus_options,
+        index=focus_options.index(stored_focus) if stored_focus in focus_options else 0,
+        disabled=read_only,
+        key="challenge_focus",
+    )
+    limitation = _counted_text_area(
+        "2. ¿Dónde aparece ese límite en el caso y por qué importa?",
+        value=current.get("limitation", ""), minimum=40, height=115, disabled=read_only,
+        help="Señala una condición, persona, dato o consecuencia concreta.", key="challenge_limitation",
+    )
+    missing = _counted_text_area(
+        "3. ¿Qué información permitiría comprobar o reducir ese límite?",
+        value=current.get("missing_evidence", ""), minimum=30, height=105, disabled=read_only, key="challenge_missing",
+    )
+    alternative = _counted_text_area(
+        "4. ¿Qué otra forma de actuar propones y cómo responde al límite?",
+        value=current.get("alternative", ""), minimum=40, height=115, disabled=read_only, key="challenge_alternative",
+    )
+    if not read_only:
+        save_col, complete_col = st.columns(2)
+        save_clicked = save_col.button("Guardar borrador", use_container_width=True, key="challenge_save")
+        challenge_ready = len(limitation.strip()) >= 40 and len(missing.strip()) >= 30 and len(alternative.strip()) >= 40
+        complete_clicked = complete_col.button("Validar y continuar", type="primary", use_container_width=True, key="challenge_complete", disabled=not challenge_ready)
+    else:
+        save_clicked = complete_clicked = False
+    payload = {"reference_claim": verified["claim"], "limitation": limitation, "assumption": focus, "missing_evidence": missing, "alternative": alternative, "counterargument": ""}
     if save_clicked:
         save_challenge(payload, complete=False)
         st.success("Borrador de Challenge guardado.")
     if complete_clicked:
         errors = save_challenge(payload, complete=True)
         if errors:
-            _show_errors(errors, {"limitation": "Limitación", "assumption": "Supuesto", "missing_evidence": "Evidencia necesaria", "own_elaboration": "Elaboración propia", "repetition": "Autoría"})
+            _show_errors(errors, {"limitation": "Explicación del límite", "missing_evidence": "Información necesaria", "alternative": "Otra forma de actuar", "own_elaboration": "Otra forma de actuar", "repetition": "Respuestas"})
         else:
             st.session_state.access_notice = "Revisión completa. Ahora toma tu decisión y explica tus razones."
             go_to_screen("E06")
@@ -423,7 +514,8 @@ def render_e05(data: dict[str, Any]) -> None:
 
 
 def render_e06(data: dict[str, Any]) -> None:
-    screen_title("E06", "Decide · Tu decisión final", "Elige qué harás y explica qué información, razones y consecuencias tomaste en cuenta.")
+    track_screen_visit("E06")
+    screen_title("E06", "Decide · Toma una postura", "Indica qué harías, qué evidencia sostiene tu decisión y qué costo o límite aceptas.")
     _show_access_notice()
     render_term_guide("tradeoff")
     with st.expander("Referencias de tu recorrido", expanded=False):
@@ -433,29 +525,38 @@ def render_e06(data: dict[str, Any]) -> None:
     current = st.session_state.decision_draft
     read_only = st.session_state.reflection_submitted
     types = ["mantener", "aceptar parcialmente", "modificar", "rechazar", "combinar"]
-    with st.form("decision_form"):
-        decision_type_value = current.get("decision_type", "modificar")
-        decision_type = st.selectbox("¿Qué harás con tu postura inicial?", types, index=types.index(decision_type_value), disabled=read_only)
-        cols = st.columns(2)
-        keep = cols[0].text_area("Elementos que conservas", value=current.get("keep", ""), height=115, disabled=read_only)
-        change = cols[1].text_area("Elementos que modificas o rechazas", value=current.get("change", ""), height=115, disabled=read_only)
-        key_evidence = st.text_area("Evidencia clave", value=current.get("key_evidence", ""), height=100, disabled=read_only)
-        evidence_weight = st.text_area("¿Por qué esa evidencia pesa en tu decisión?", value=current.get("evidence_weight", ""), height=100, disabled=read_only)
-        tradeoff = st.text_area("¿Qué se gana y qué se sacrifica con tu decisión?", value=current.get("tradeoff", ""), height=100, disabled=read_only, help="Explica el balance que aceptas y qué criterio propio utilizaste.")
-        if not read_only:
-            save_col, complete_col = st.columns(2)
-            save_clicked = save_col.form_submit_button("Guardar borrador", use_container_width=True)
-            complete_clicked = complete_col.form_submit_button("Completar Decide", type="primary", use_container_width=True)
-        else:
-            save_clicked = complete_clicked = False
-    payload = {"decision_type": decision_type, "keep": keep, "change": change, "key_evidence": key_evidence, "evidence_weight": evidence_weight, "tradeoff": tradeoff}
+    decision_type_value = current.get("decision_type", "modificar")
+    decision_type = st.selectbox("Respecto de tu postura inicial, decides…", types, index=types.index(decision_type_value), disabled=read_only, key="decision_type_widget")
+    previous_decision = " ".join(part for part in (current.get("keep", ""), current.get("change", "")) if part).strip()
+    change = _counted_text_area(
+        "1. ¿Qué harías ahora y qué conservas o modificas de tu postura inicial?",
+        value=previous_decision, minimum=50, height=120, disabled=read_only, key="decision_summary",
+    )
+    previous_evidence = " ".join(part for part in (current.get("key_evidence", ""), current.get("evidence_weight", "")) if part).strip()
+    key_evidence = _counted_text_area(
+        "2. ¿Qué evidencia fue decisiva y por qué tiene más peso que las demás?",
+        value=previous_evidence, minimum=50, height=115, disabled=read_only, key="decision_evidence",
+    )
+    tradeoff = _counted_text_area(
+        "3. ¿Qué beneficio obtienes y qué costo, riesgo o límite aceptas?",
+        value=current.get("tradeoff", ""), minimum=40, height=105, disabled=read_only,
+        help="Explica el balance de tu decisión, no sólo una ventaja.", key="decision_tradeoff",
+    )
+    if not read_only:
+        save_col, complete_col = st.columns(2)
+        save_clicked = save_col.button("Guardar borrador", use_container_width=True, key="decision_save")
+        decision_ready = len(change.strip()) >= 50 and len(key_evidence.strip()) >= 50 and len(tradeoff.strip()) >= 40
+        complete_clicked = complete_col.button("Validar y continuar", type="primary", use_container_width=True, key="decision_complete", disabled=not decision_ready)
+    else:
+        save_clicked = complete_clicked = False
+    payload = {"decision_type": decision_type, "keep": "", "change": change, "key_evidence": key_evidence, "evidence_weight": "", "tradeoff": tradeoff}
     if save_clicked:
         save_decision(payload, complete=False)
         st.success("Borrador de Decide guardado.")
     if complete_clicked:
         errors = save_decision(payload, complete=True)
         if errors:
-            _show_errors(errors, {"decision_type": "Tipo de decisión", "keep": "Elementos conservados", "change": "Cambios", "key_evidence": "Información clave", "evidence_weight": "Importancia de la información", "tradeoff": "Lo que se gana y se sacrifica"})
+            _show_errors(errors, {"decision_type": "Tipo de decisión", "change": "Decisión explicada", "key_evidence": "Evidencia decisiva", "tradeoff": "Beneficio y costo"})
         else:
             st.session_state.access_notice = "Decisión guardada. Completa ahora tu reflexión final."
             go_to_screen("E07")
@@ -463,7 +564,8 @@ def render_e06(data: dict[str, Any]) -> None:
 
 
 def render_e07(data: dict[str, Any]) -> None:
-    screen_title("E07", "Reflect · Reflexión final", "Escribe tu respuesta final y explica qué cambió, qué aprendiste y qué falta por investigar.")
+    track_screen_visit("E07")
+    screen_title("E07", "Reflect · Reflexión final", "Resume tu decisión final, qué cambió y qué todavía necesitas revisar.")
     _show_access_notice()
     render_term_guide("uncertainty")
     with st.expander("Comparar con mi primera respuesta (sólo lectura)", expanded=True):
@@ -473,27 +575,43 @@ def render_e07(data: dict[str, Any]) -> None:
     current = st.session_state.final_responses.get("responses", {}) if st.session_state.reflection_submitted else st.session_state.final_draft
     confidence = st.session_state.final_responses.get("confidence", st.session_state.final_confidence) if st.session_state.reflection_submitted else st.session_state.final_confidence
     read_only = st.session_state.reflection_submitted
-    with st.form("reflection_form"):
-        final_response = st.text_area("Respuesta final integrada", value=current.get("final_response", ""), height=140, disabled=read_only)
-        cols = st.columns(2)
-        problem = cols[0].text_area("Después del análisis, ¿cuál es el verdadero problema?", value=current.get("problem", ""), height=120, disabled=read_only)
-        evidence = cols[1].text_area("¿Qué información revisaste y qué tan útil fue?", value=current.get("evidence", ""), height=120, disabled=read_only)
-        critique = cols[0].text_area("¿Qué cuestionaste de la propuesta de IA?", value=current.get("ai_critique", ""), height=120, disabled=read_only)
-        decision = cols[1].text_area("¿Cuál es tu decisión final y por qué?", value=current.get("decision", ""), height=120, disabled=read_only)
-        change = st.text_area("¿Qué cambió o se fortaleció?", value=current.get("change", ""), height=95, disabled=read_only)
-        learning = st.text_area("¿Qué aprendiste?", value=current.get("learning", ""), height=95, disabled=read_only)
-        contribution = st.text_area("¿Qué idea, criterio o decisión aportaste tú?", value=current.get("human_contribution", ""), height=95, disabled=read_only)
-        uncertainty = st.text_area("¿Qué todavía no sabes o necesitas investigar?", value=current.get("uncertainty", ""), height=85, disabled=read_only)
-        next_step = st.text_area("¿Cuál sería tu siguiente paso?", value=current.get("next_step", ""), height=85, disabled=read_only)
-        final_confidence = st.slider("Confianza final", 1, 5, value=confidence, disabled=read_only, help="Usa la misma escala que al inicio.")
-        confirm_submit = st.checkbox("Entiendo que al enviar esta reflexión quedará bloqueada para evaluación.", disabled=read_only, value=read_only)
-        if not read_only:
-            save_col, submit_col = st.columns(2)
-            save_clicked = save_col.form_submit_button("Guardar borrador", use_container_width=True)
-            submit_clicked = submit_col.form_submit_button("Enviar a evaluación", type="primary", use_container_width=True)
-        else:
-            save_clicked = submit_clicked = False
-    payload = {"final_response": final_response, "problem": problem, "evidence": evidence, "ai_critique": critique, "decision": decision, "change": change, "learning": learning, "human_contribution": contribution, "uncertainty": uncertainty, "next_step": next_step}
+    cols = st.columns(2)
+    with cols[0]:
+        problem = _counted_text_area(
+            "1. ¿Cuál es el problema que realmente debe resolverse y a quién afecta?",
+            value=current.get("problem", ""), minimum=40, height=120, disabled=read_only, key="reflect_problem",
+        )
+        critique = _counted_text_area(
+            "3. ¿Qué límite, supuesto o posible error identificaste en la propuesta de IA?",
+            value=current.get("ai_critique", ""), minimum=40, height=120, disabled=read_only, key="reflect_critique",
+        )
+        change = _counted_text_area(
+            "5. ¿Qué cambió o se fortaleció en tu razonamiento y qué aportaste tú?",
+            value=current.get("change", ""), minimum=35, height=110, disabled=read_only, key="reflect_change",
+        )
+    with cols[1]:
+        evidence = _counted_text_area(
+            "2. ¿Qué evidencia utilizaste y qué conclusión concreta permite sostener?",
+            value=current.get("evidence", ""), minimum=40, height=120, disabled=read_only, key="reflect_evidence",
+        )
+        decision = _counted_text_area(
+            "4. ¿Cuál es tu decisión final y cuáles son sus dos razones principales?",
+            value=current.get("decision", ""), minimum=40, height=120, disabled=read_only, key="reflect_decision",
+        )
+        uncertainty = _counted_text_area(
+            "6. ¿Qué falta saber y cuál sería el siguiente paso para comprobarlo?",
+            value=current.get("uncertainty", ""), minimum=35, height=110, disabled=read_only, key="reflect_uncertainty",
+        )
+    final_confidence = st.slider("Confianza final", 1, 5, value=confidence, disabled=read_only, help="Usa la misma escala que al inicio.", key="reflect_confidence")
+    confirm_submit = st.checkbox("Entiendo que al enviar esta reflexión quedará bloqueada para evaluación.", disabled=read_only, value=read_only, key="reflect_confirm")
+    if not read_only:
+        save_col, submit_col = st.columns(2)
+        save_clicked = save_col.button("Guardar borrador", use_container_width=True, key="reflect_save")
+        reflection_ready = all((len(problem.strip()) >= 40, len(evidence.strip()) >= 40, len(critique.strip()) >= 40, len(decision.strip()) >= 40, len(change.strip()) >= 35, len(uncertainty.strip()) >= 35, confirm_submit))
+        submit_clicked = submit_col.button("Enviar a evaluación", type="primary", use_container_width=True, key="reflect_submit", disabled=not reflection_ready)
+    else:
+        save_clicked = submit_clicked = False
+    payload = {"problem": problem, "evidence": evidence, "ai_critique": critique, "decision": decision, "change": change, "uncertainty": uncertainty}
     if save_clicked:
         save_reflection(payload, final_confidence, submit=False)
         st.success("Borrador de Reflect guardado.")
@@ -503,7 +621,7 @@ def render_e07(data: dict[str, Any]) -> None:
         else:
             errors = save_reflection(payload, final_confidence, submit=True)
             if errors:
-                _show_errors(errors, {"final_response": "Respuesta final", "problem": "Problema", "evidence": "Evidencia", "ai_critique": "Análisis crítico", "decision": "Decisión", "change": "Cambio", "learning": "Aprendizaje", "human_contribution": "Contribución propia", "uncertainty": "Incertidumbre", "next_step": "Siguiente paso", "confidence": "Confianza"})
+                _show_errors(errors, {"final_response": "Respuesta final", "problem": "Problema", "evidence": "Información revisada", "ai_critique": "Análisis crítico", "decision": "Decisión", "change": "Cambio y aprendizaje", "uncertainty": "Lo que falta y siguiente paso", "confidence": "Confianza"})
             else:
                 st.session_state.access_notice = "Reflexión enviada. La sesión quedó en espera de evaluación humana."
                 go_to_screen("V01")

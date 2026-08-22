@@ -26,6 +26,7 @@ def render_v01(data: dict[str, Any]) -> None:
         "Evaluación humana de la rúbrica",
         "Compara evidencia inicial y final, documenta la valoración y valida los niveles 1–4.",
     )
+    st.caption(f"Sesión {st.session_state.session_code or 'anterior'} · Participante {st.session_state.participant_id}")
     if st.session_state.access_notice:
         st.info(st.session_state.pop("access_notice"))
     st.success("Vista autenticada y separada del recorrido estudiantil.")

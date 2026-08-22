@@ -44,7 +44,7 @@ el costo o renuncia que acepta.
 
 ## Cómo se generan las variantes
 
-No se mantienen 126 documentos independientes. Cada variante combina:
+No se mantienen 129 documentos independientes. Cada variante combina:
 
 - un escenario específico de la carrera;
 - dos hechos y una afirmación de verificación definidos por la escuela;
@@ -52,7 +52,7 @@ No se mantienen 126 documentos independientes. Cada variante combina:
 - la misma rúbrica Reasoning Delta v2.
 
 La combinación de 42 perfiles —41 carreras y la opción transversal— con tres semestres produce
-126 variantes verificables. Al crear la sesión, la aplicación guarda una copia completa del caso;
+129 variantes verificables. Al crear la sesión, la aplicación guarda una copia completa del caso;
 una actualización posterior del catálogo no cambia el recorrido ya iniciado.
 
 ## ¿Conviene incorporar todos los semestres ahora?

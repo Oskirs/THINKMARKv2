@@ -51,9 +51,17 @@ def build_brand_css(brand: dict[str, Any]) -> str:
           .tm-card {{ background:var(--tm-surface); border:1px solid var(--tm-border); border-radius:16px; padding:1.15rem 1.25rem; margin:.65rem 0; box-shadow:0 3px 14px rgba(24,32,51,.04); }}
           .tm-question {{ background:var(--tm-primary-soft); border-left:4px solid var(--tm-primary); border-radius:10px; padding:1rem 1.15rem; font-size:1.05rem; }}
           .tm-opportunity {{ background:var(--tm-accent-soft); border:1px solid var(--tm-accent-border); border-radius:16px; padding:1rem 1.15rem; }}
+          .tm-case-label {{ display:inline-block; margin:.8rem 0 .35rem; padding:.38rem .8rem; border-radius:8px; background:var(--tm-primary); color:#FFFFFF; font-size:1.15rem; font-weight:800; letter-spacing:.08em; }}
           .tm-badge {{ display:inline-block; padding:.25rem .55rem; border-radius:999px; background:var(--tm-primary-soft); color:var(--tm-primary-dark); font-size:.76rem; font-weight:700; }}
           .tm-muted {{ color:var(--tm-muted); }}
-          div[data-testid="stButton"] > button {{ border-radius:10px; font-weight:650; }}
+          div[data-testid="stButton"] > button,
+          div[data-testid="stFormSubmitButton"] > button {{ border-radius:10px; font-weight:650; color:var(--tm-primary-dark) !important; background:#FFFFFF !important; border:1px solid var(--tm-primary) !important; }}
+          div[data-testid="stButton"] > button[kind="primary"],
+          div[data-testid="stFormSubmitButton"] > button[kind="primary"] {{ color:#FFFFFF !important; background:var(--tm-primary) !important; border-color:var(--tm-primary) !important; }}
+          div[data-testid="stButton"] > button:hover,
+          div[data-testid="stFormSubmitButton"] > button:hover {{ color:#FFFFFF !important; background:var(--tm-primary-dark) !important; border-color:var(--tm-primary-dark) !important; }}
+          div[data-testid="stButton"] > button:disabled,
+          div[data-testid="stFormSubmitButton"] > button:disabled {{ color:#666B78 !important; background:#E8E9ED !important; border-color:#C9CBD2 !important; opacity:1 !important; }}
           div[data-testid="stProgress"] > div > div > div {{ background-color:var(--tm-primary); }}
           div[data-testid="stMetric"] {{ background:#fff; border:1px solid var(--tm-border); padding:.75rem; border-radius:14px; }}
 
@@ -112,6 +120,11 @@ def build_brand_css(brand: dict[str, Any]) -> str:
           }}
           [role="option"]:hover,
           [role="option"][aria-selected="true"] {{ background-color: var(--tm-primary-soft) !important; }}
+          [data-testid="stExpander"] details,
+          [data-testid="stExpander"] summary {{ background:#FFFFFF !important; color:var(--tm-ink) !important; }}
+          [data-testid="stExpander"] summary:hover {{ background:var(--tm-primary-soft) !important; color:var(--tm-primary-dark) !important; }}
+          [data-testid="stAlert"] {{ color:var(--tm-ink) !important; }}
+          [data-testid="stAlert"] p {{ color:var(--tm-ink) !important; }}
           .stTextInput label,
           .stTextArea label,
           .stSelectbox label,

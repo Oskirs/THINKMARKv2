@@ -13,6 +13,7 @@ import streamlit as st
 from src.ai.coach import CoachResult, CoachService, FOCUS_LABELS, load_coach_config
 from src.ai.thinkmark import ThinkMarkService, build_thinkmark_context, load_thinkmark_config
 from src.domain.baseline import seal_baseline
+from src.domain.activity_session import normalize_session_code, participant_may_enter
 from src.domain.completion import seal_completion, validate_facilitator_observations, validate_feedback
 from src.domain.evaluation import normalize_evaluator_code, seal_evaluation, validate_evaluation
 from src.domain.thinkmark import content_hash, normalize_content, seal_final, validate_student_decision
@@ -32,6 +33,8 @@ INSTRUMENT_VERSION = "THINKMARK-v2"
 DEFAULT_STATE: dict[str, Any] = {
     "participant_id": "",
     "session_id": "SIN-SESIÓN",
+    "activity_session_id": "",
+    "session_code": "",
     "current_screen": "E01",
     "current_stage": 0,
     "consent_status": False,
@@ -85,6 +88,7 @@ DEFAULT_STATE: dict[str, Any] = {
     "completed_at": "",
     "technical_incidents": "",
     "feedback_submitted": False,
+    "stage_metrics": {},
     "access_role": "",
     "internal_authenticated": False,
     "internal_user_id": "",
@@ -107,6 +111,8 @@ def _record_from_state() -> dict[str, Any]:
     return {
         "participant_id": st.session_state.participant_id,
         "session_id": st.session_state.session_id,
+        "activity_session_id": st.session_state.activity_session_id,
+        "session_code": st.session_state.session_code,
         "current_stage": st.session_state.current_stage,
         "consent_status": st.session_state.consent_status,
         "consent_record": st.session_state.consent_record,
@@ -158,13 +164,15 @@ def _record_from_state() -> dict[str, Any]:
         "completed_at": st.session_state.completed_at,
         "technical_incidents": st.session_state.technical_incidents,
         "feedback_submitted": st.session_state.feedback_submitted,
+        "stage_metrics": st.session_state.stage_metrics,
         "updated_at": datetime.now(UTC).isoformat(),
     }
 
 
 def _hydrate(record: dict[str, Any]) -> None:
     for key in (
-        "participant_id", "session_id", "current_stage", "consent_status", "consent_record",
+        "participant_id", "session_id", "activity_session_id", "session_code",
+        "current_stage", "consent_status", "consent_record",
         "academic_profile", "case_snapshot",
         "baseline_draft", "baseline_confidence", "baseline_locked", "baseline_snapshot",
         "coach_simulation_completed", "coach_completed", "coach_bridge", "coach_turns",
@@ -179,7 +187,7 @@ def _hydrate(record: dict[str, Any]) -> None:
         "thinkmark_decided_at", "thinkmark_usage",
         "feedback", "feedback_draft", "facilitator_observations", "completion_integrity",
         "completed", "completed_at", "technical_incidents",
-        "feedback_submitted",
+        "feedback_submitted", "stage_metrics",
     ):
         if key in record:
             st.session_state[key] = record[key]
@@ -193,6 +201,42 @@ def _hydrate(record: dict[str, Any]) -> None:
 def reset_access_state() -> None:
     for key in list(st.session_state.keys()):
         del st.session_state[key]
+
+
+def track_screen_visit(screen_id: str) -> None:
+    """Registra tiempos descriptivos sin capturar identidad ni navegación externa."""
+    now = datetime.now(UTC).isoformat()
+    metrics = dict(st.session_state.stage_metrics)
+    stage = dict(metrics.get(screen_id, {}))
+    first_visit = not stage
+    stage.setdefault("started_at", now)
+    stage["last_seen_at"] = now
+    metrics[screen_id] = stage
+    st.session_state.stage_metrics = metrics
+    if first_visit and st.session_state.participant_id and st.session_state.consent_status:
+        get_session_repository().save(_record_from_state())
+
+
+def _complete_stage_metric(screen_id: str, payload: dict[str, Any]) -> None:
+    now = datetime.now(UTC)
+    metrics = dict(st.session_state.stage_metrics)
+    stage = dict(metrics.get(screen_id, {}))
+    started_at = stage.get("started_at", now.isoformat())
+    try:
+        elapsed = max(0, int((now - datetime.fromisoformat(started_at)).total_seconds()))
+    except (TypeError, ValueError):
+        elapsed = 0
+    stage.update({
+        "started_at": started_at,
+        "last_seen_at": now.isoformat(),
+        "completed_at": now.isoformat(),
+        "elapsed_seconds": elapsed,
+        "response_characters": {
+            key: len(str(value).strip()) for key, value in payload.items() if isinstance(value, str)
+        },
+    })
+    metrics[screen_id] = stage
+    st.session_state.stage_metrics = metrics
 
 
 def unload_review_session() -> None:
@@ -211,11 +255,11 @@ def unload_review_session() -> None:
     st.session_state.selected_review_participant = ""
 
 
-def load_session_for_review(participant_id: str, repository: SessionRepository | None = None) -> bool:
+def load_session_for_review(participant_id: str, activity_session_id: str = "", repository: SessionRepository | None = None) -> bool:
     if st.session_state.access_role != "evaluator" or not st.session_state.internal_authenticated:
         raise PermissionError("Se requiere acceso de evaluador.")
     repository = repository or get_session_repository()
-    record = repository.get(participant_id)
+    record = repository.get(participant_id, activity_session_id)
     if not record or not record.get("reflection_submitted"):
         return False
     _hydrate(record)
@@ -231,7 +275,9 @@ def load_session_for_review(participant_id: str, repository: SessionRepository |
 def refresh_current_session(repository: SessionRepository | None = None) -> bool:
     if not st.session_state.participant_id:
         return False
-    record = (repository or get_session_repository()).get(st.session_state.participant_id)
+    record = (repository or get_session_repository()).get(
+        st.session_state.participant_id, st.session_state.activity_session_id
+    )
     if not record:
         return False
     _hydrate(record)
@@ -240,6 +286,7 @@ def refresh_current_session(repository: SessionRepository | None = None) -> bool
 
 
 def create_or_resume_session(
+    session_code: str,
     participant_id: str,
     academic_profile: dict[str, Any],
     case_snapshot: dict[str, Any],
@@ -249,7 +296,17 @@ def create_or_resume_session(
     if st.session_state.access_role != "student":
         raise PermissionError("El código de participante sólo puede utilizarse en el acceso estudiantil.")
     repository = repository or get_session_repository()
-    previous = repository.get(participant_id)
+    activity_session = repository.get_activity_session(normalize_session_code(session_code))
+    if not activity_session:
+        raise ValueError("El código de sesión no existe. Revisa los seis caracteres con tu facilitador.")
+    previous_anywhere = repository.get(participant_id)
+    if previous_anywhere and previous_anywhere.get("activity_session_id") != activity_session["activity_session_id"]:
+        raise ValueError("Este código de participante ya está vinculado a otra sesión.")
+    previous = repository.get(participant_id, activity_session["activity_session_id"])
+    if not participant_may_enter(activity_session["status"], already_joined=bool(previous)):
+        if activity_session["status"] == "archived":
+            raise ValueError("Esta sesión está archivada y sólo puede consultarse por el equipo responsable.")
+        raise ValueError("Esta sesión está cerrada para nuevos participantes.")
     if previous:
         _hydrate(previous)
         if not previous.get("academic_profile"):
@@ -270,6 +327,8 @@ def create_or_resume_session(
     accepted_at = datetime.now(UTC).isoformat()
     st.session_state.participant_id = participant_id
     st.session_state.session_id = f"SES-{uuid4().hex[:10].upper()}"
+    st.session_state.activity_session_id = activity_session["activity_session_id"]
+    st.session_state.session_code = activity_session["session_code"]
     st.session_state.current_stage = 1
     st.session_state.consent_status = True
     st.session_state.session_status = "in_progress"
@@ -285,7 +344,7 @@ def create_or_resume_session(
         "academic_catalog_version": academic_profile.get("catalog_version", "sin-versión"),
     }
     repository.save(_record_from_state())
-    st.session_state.access_notice = "Sesión creada. Tu código te permitirá recuperar este avance sin usar tu nombre."
+    st.session_state.access_notice = "Ingreso registrado. Tu avance quedó vinculado a la sesión y a tu código anónimo."
     return False
 
 
@@ -308,6 +367,7 @@ def close_baseline(responses: dict[str, str], confidence: int, case_id: str, rep
     st.session_state.baseline_locked = True
     st.session_state.current_stage = 2
     st.session_state.session_status = "baseline_locked"
+    _complete_stage_metric("E02", responses)
     (repository or get_session_repository()).save(_record_from_state())
 
 
@@ -417,6 +477,7 @@ def submit_coach_turn(
     st.session_state.coach_completed = True
     st.session_state.coach_simulation_completed = True  # alias de compatibilidad para rutas 6.3
     st.session_state.current_stage = 3
+    _complete_stage_metric("E03", {f"turn_{index + 1}": turn.get("response", "") for index, turn in enumerate(turns)})
     repository.save(_record_from_state())
     return {}
 
@@ -434,6 +495,7 @@ def save_verification(payload: dict[str, str], *, complete: bool, repository: Se
         st.session_state.verifications = [record]
         st.session_state.verification_completed = True
         st.session_state.current_stage = max(st.session_state.current_stage, 4)
+        _complete_stage_metric("E04", st.session_state.verification_draft)
     repository.save(_record_from_state())
     return {}
 
@@ -451,6 +513,7 @@ def save_challenge(payload: dict[str, str], *, complete: bool, repository: Sessi
         st.session_state.challenges = [record]
         st.session_state.challenge_completed = True
         st.session_state.current_stage = max(st.session_state.current_stage, 5)
+        _complete_stage_metric("E05", st.session_state.challenge_draft)
     repository.save(_record_from_state())
     return {}
 
@@ -467,6 +530,7 @@ def save_decision(payload: dict[str, str], *, complete: bool, repository: Sessio
         st.session_state.decision = st.session_state.decision_draft | {"completed_at": datetime.now(UTC).isoformat()}
         st.session_state.decision_completed = True
         st.session_state.current_stage = max(st.session_state.current_stage, 6)
+        _complete_stage_metric("E06", st.session_state.decision_draft)
     repository.save(_record_from_state())
     return {}
 
@@ -491,6 +555,7 @@ def save_reflection(payload: dict[str, str], confidence: int, *, submit: bool, r
         st.session_state.reflection_submitted = True
         st.session_state.session_status = "awaiting_review"
         st.session_state.current_stage = 7
+        _complete_stage_metric("E07", st.session_state.final_draft)
     repository.save(_record_from_state())
     return {}
 

@@ -38,11 +38,9 @@ def validate_verification(payload: dict[str, str]) -> dict[str, str]:
 
 
 def validate_challenge(payload: dict[str, str]) -> dict[str, str]:
-    errors = _required_text(payload, {"limitation": 35, "assumption": 35, "missing_evidence": 35})
+    errors = _required_text(payload, {"limitation": 40, "missing_evidence": 30, "alternative": 40})
     alternative = payload.get("alternative", "").strip()
     counterargument = payload.get("counterargument", "").strip()
-    if max(len(alternative), len(counterargument)) < 35:
-        errors["own_elaboration"] = "Explica otra opción o una razón contraria con al menos 35 caracteres."
     reference = payload.get("reference_claim", "").strip().casefold()
     examined = [payload.get(key, "").strip().casefold() for key in ("limitation", "assumption", "missing_evidence", "alternative", "counterargument")]
     repeated = sum(bool(value) and SequenceMatcher(None, reference, value).ratio() > 0.88 for value in examined)
@@ -54,7 +52,7 @@ def validate_challenge(payload: dict[str, str]) -> dict[str, str]:
 def validate_decision(payload: dict[str, str]) -> dict[str, str]:
     errors = _required_text(
         payload,
-        {"keep": 30, "change": 30, "key_evidence": 30, "evidence_weight": 35, "tradeoff": 35},
+        {"change": 50, "key_evidence": 50, "tradeoff": 40},
     )
     if payload.get("decision_type") not in {"mantener", "aceptar parcialmente", "modificar", "rechazar", "combinar"}:
         errors["decision_type"] = "Selecciona qué harás con la postura inicial."
@@ -65,16 +63,12 @@ def validate_reflection(payload: dict[str, str], confidence: int) -> dict[str, s
     errors = _required_text(
         payload,
         {
-            "final_response": 60,
             "problem": 40,
             "evidence": 40,
             "ai_critique": 40,
             "decision": 40,
             "change": 35,
-            "learning": 35,
-            "human_contribution": 35,
-            "uncertainty": 25,
-            "next_step": 25,
+            "uncertainty": 35,
         },
     )
     if confidence not in range(1, 6):
