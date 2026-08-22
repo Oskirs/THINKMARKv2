@@ -19,6 +19,7 @@ COMPLETE_RESPONSES = {
 def test_participant_code_is_normalized_and_validated() -> None:
     assert normalize_participant_code(" tm-demo-024 ") == "TM-DEMO-024"
     assert validate_participant_code("tm-demo-024") == ("TM-DEMO-024", None)
+    assert validate_participant_code(" alu-001 ") == ("ALU-001", None)
     _, error = validate_participant_code("oscar@email.com")
     assert error is not None
 
