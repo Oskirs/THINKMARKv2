@@ -35,7 +35,7 @@ status_label = runtime_status_label(runtime_settings.uses_supabase)
 release_caption = (
     "Piloto controlado THINKMARK v2"
     if runtime_settings.uses_supabase
-    else "Prototipo THINKMARK v2 · Paso 6.8.3"
+    else "Prototipo THINKMARK v2 · Ajustes 7.3.1–7.3.5"
 )
 
 if not st.session_state.access_role:
