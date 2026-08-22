@@ -69,7 +69,23 @@ def test_sql_enables_rls_and_does_not_grant_student_public_access() -> None:
     for table in ("profiles", "thinkmark_sessions", "session_assignments", "learning_opportunities", "access_audit"):
         assert f"alter table public.{table} enable row level security" in sql
     assert "revoke all on public.profiles" in sql
-    assert "from anon" in sql
+    assert "from anon, authenticated" in sql
+    assert "grant select on public.profiles" in sql
+    assert "grant insert on public.learning_opportunities to authenticated" in sql
     assert "grant execute on function public.save_thinkmark_session" in sql
     assert "to service_role" in sql
     assert "raw_user_meta_data" in sql  # Comentario explícito: no usar metadatos editables para roles.
+
+
+def test_internal_role_onboarding_rejects_placeholders_and_shared_identity() -> None:
+    sql = (
+        Path(__file__).resolve().parents[1]
+        / "supabase"
+        / "onboarding"
+        / "assign_internal_roles_template.sql"
+    ).read_text(encoding="utf-8")
+    assert "Reemplaza los dos correos de ejemplo" in sql
+    assert "Evaluador y profesor deben utilizar cuentas diferentes" in sql
+    assert "from auth.users" in sql
+    assert "raw_user_meta_data" not in sql
+    assert "password" not in sql.casefold()
