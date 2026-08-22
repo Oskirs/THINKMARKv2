@@ -1,9 +1,9 @@
 {
-  "catalog_version": "THINKMARK-UAG-GDL-v2",
+  "catalog_version": "THINKMARK-UAG-GDL-v2.1",
   "catalog_note": "Catálogo piloto basado en la oferta profesional presencial de Guadalajara publicada por la UAG; se conserva una opción transversal.",
   "source": {
     "url": "https://www.uag.mx/es/profesional",
-    "checked_at": "2026-08-14",
+    "checked_at": "2026-08-21",
     "campus_scope": "Guadalajara",
     "maintenance_note": "Verificar la oferta oficial antes de cada nuevo ciclo o piloto."
   },
@@ -117,6 +117,7 @@
     {"program_id":"derecho","label":"Derecho","area_id":"derecho_humanidades","scenario":{"title":"IA para priorizar la revisión de expedientes","context":"Una institución pública considera un sistema que ordena expedientes por urgencia estimada; una prioridad baja podría retrasar la revisión.","central_question":"¿Debe utilizarse para definir el orden inicial de revisión?","specific_fact":"No se han revisado diferencias entre tipos de solicitantes."}},
     {"program_id":"relaciones_internacionales","label":"Relaciones Internacionales","area_id":"derecho_humanidades","scenario":{"title":"IA para anticipar riesgos en cooperación internacional","context":"Una organización combina indicadores y noticias para priorizar regiones en una estrategia de cooperación.","central_question":"¿Debe orientar recursos hacia las regiones señaladas?","specific_fact":"La cobertura informativa es desigual y algunas fuentes provienen de traducciones automáticas."}},
 
+    {"program_id":"ciencias_comunicacion_medios_digitales","label":"Ciencias de la Comunicación y Medios Digitales","area_id":"industrias_creativas","scenario":{"title":"IA para adaptar mensajes a audiencias digitales","context":"Un medio evalúa una herramienta que recomienda temas, formatos y horarios según comportamiento de audiencia.","central_question":"¿Debe seguir la recomendación para una campaña informativa?","specific_fact":"Los datos describen interacción, pero no comprensión ni calidad informativa."}},
     {"program_id":"comunicacion_audiencias_digitales","label":"Comunicación para Audiencias Digitales","area_id":"industrias_creativas","scenario":{"title":"IA para adaptar mensajes a audiencias digitales","context":"Un medio evalúa una herramienta que recomienda temas, formatos y horarios según comportamiento de audiencia.","central_question":"¿Debe seguir la recomendación para una campaña informativa?","specific_fact":"Los datos describen interacción, pero no comprensión ni calidad informativa."}},
     {"program_id":"videojuegos_entornos_virtuales","label":"Creación de Videojuegos y Entornos Virtuales","area_id":"industrias_creativas","scenario":{"title":"IA para generar contenido de un entorno virtual","context":"Un estudio prueba una herramienta que genera personajes, escenarios y diálogos para acelerar un prototipo.","central_question":"¿Debe integrar el contenido en la siguiente versión?","specific_fact":"El material de entrenamiento y sus licencias no están claramente documentados."}},
     {"program_id":"diseno_grafico_estrategico","label":"Diseño Gráfico Estratégico","area_id":"industrias_creativas","scenario":{"title":"IA para desarrollar una identidad visual","context":"Un equipo evalúa propuestas generadas por IA para definir la dirección inicial de una identidad visual.","central_question":"¿Debe presentar la propuesta mejor evaluada como base?","specific_fact":"La evaluación automática prioriza semejanza con tendencias actuales."}},
