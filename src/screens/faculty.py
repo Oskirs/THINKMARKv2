@@ -12,6 +12,7 @@ from src.ui.layout import screen_title
 
 
 ACTIVITY_ID = "CASO-DEMO-01-v1"
+STATUS_LABELS = {"open": "Abierta", "closed": "Cerrada", "archived": "Archivada"}
 
 
 def _show_errors(errors: dict[str, str]) -> None:
@@ -30,6 +31,80 @@ def _show_errors(errors: dict[str, str]) -> None:
         st.markdown(f"- **{labels.get(field, field)}**: {message}")
 
 
+def _render_session_management() -> None:
+    repository = get_session_repository()
+    st.subheader("Sesiones del grupo")
+    st.write("Crea un código para reunir las respuestas del grupo y facilitar su revisión.")
+    evaluators = repository.list_evaluators()
+    evaluator_by_label = {item["display_code"]: item["user_id"] for item in evaluators}
+    with st.form("create_activity_session_form"):
+        title = st.text_input("Nombre interno de la sesión", placeholder="Ejemplo: 5.º semestre · Grupo A")
+        evaluator_label = st.selectbox("Evaluador asignado", ["Sin asignar"] + list(evaluator_by_label))
+        create_clicked = st.form_submit_button("Crear sesión y generar código", type="primary", use_container_width=True)
+    if create_clicked:
+        if not 3 <= len(title.strip()) <= 120:
+            st.error("Escribe un nombre de sesión de 3 a 120 caracteres.")
+        else:
+            created = repository.create_activity_session(
+                title, st.session_state.internal_user_id, evaluator_by_label.get(evaluator_label, "")
+            )
+            st.session_state.access_notice = f"Sesión creada. Comparte el código {created['session_code']} con el grupo."
+            st.rerun()
+
+    sessions = repository.list_activity_sessions_for_creator(st.session_state.internal_user_id)
+    if not sessions:
+        st.info("Todavía no has creado sesiones.")
+        return
+    sessions.sort(key=lambda item: item.get("created_at", ""), reverse=True)
+    by_code = {item["session_code"]: item for item in sessions}
+    selected_code = st.selectbox(
+        "Administrar sesión",
+        list(by_code),
+        format_func=lambda code: f"{code} · {by_code[code]['title']} · {STATUS_LABELS.get(by_code[code]['status'], by_code[code]['status'])}",
+    )
+    selected = by_code[selected_code]
+    participants = repository.list_participants(selected["activity_session_id"])
+    cols = st.columns(3)
+    cols[0].metric("Código", selected_code)
+    cols[1].metric("Participantes", len(participants))
+    cols[2].metric("Estado", STATUS_LABELS.get(selected["status"], selected["status"]))
+    if selected["status"] == "open":
+        if st.button("Cerrar ingreso de nuevos participantes", use_container_width=True):
+            repository.set_activity_session_status(selected_code, "closed")
+            st.rerun()
+    elif selected["status"] == "closed":
+        action_cols = st.columns(2)
+        if action_cols[0].button("Reabrir sesión", use_container_width=True):
+            repository.set_activity_session_status(selected_code, "open")
+            st.rerun()
+        if action_cols[1].button("Archivar sesión", use_container_width=True):
+            repository.set_activity_session_status(selected_code, "archived")
+            st.rerun()
+    else:
+        st.caption("La sesión archivada se conserva sólo para consulta.")
+
+
+def _render_fatigue_indicators(records: list[dict[str, Any]]) -> None:
+    rows = []
+    for screen_id in ("E02", "E03", "E04", "E05", "E06", "E07"):
+        stages = [record.get("stage_metrics", {}).get(screen_id, {}) for record in records]
+        started = [stage for stage in stages if stage.get("started_at")]
+        completed = [stage for stage in started if stage.get("completed_at")]
+        elapsed = [int(stage.get("elapsed_seconds", 0)) for stage in completed]
+        lengths = [sum(stage.get("response_characters", {}).values()) for stage in completed]
+        rows.append({
+            "Pantalla": screen_id,
+            "Iniciaron": len(started),
+            "Completaron": len(completed),
+            "Sin completar": len(started) - len(completed),
+            "Minutos promedio": round(sum(elapsed) / len(elapsed) / 60, 1) if elapsed else None,
+            "Caracteres promedio": round(sum(lengths) / len(lengths)) if lengths else None,
+        })
+    st.subheader("Carga y posible fatiga del recorrido")
+    st.caption("Indicadores descriptivos por pantalla. Sirven para detectar abandono o respuestas cada vez más cortas; no califican estudiantes.")
+    st.dataframe(rows, use_container_width=True, hide_index=True)
+
+
 def render_d01(data: dict[str, Any]) -> None:
     if st.session_state.access_role != "teacher" or not st.session_state.internal_authenticated:
         st.error("Se requiere acceso autenticado de profesor.")
@@ -43,6 +118,9 @@ def render_d01(data: dict[str, Any]) -> None:
         "No son calificaciones, diagnósticos ni rankings de estudiantes."
     )
 
+    _render_session_management()
+    st.divider()
+
     session_repository = get_session_repository()
     records = session_repository.list_all()
     if not st.session_state.dashboard_access_logged:
@@ -54,6 +132,8 @@ def render_d01(data: dict[str, Any]) -> None:
     cols[1].metric("Sesiones completas", summary["completed"], delta=f"{summary['completion_rate']:.0%}")
     cols[2].metric("Deltas validados", summary["evaluated"])
     cols[3].metric("Mediana de recorrido", f"{summary['median_minutes']} min" if summary["median_minutes"] is not None else "Sin dato")
+
+    _render_fatigue_indicators(records)
 
     if not summary["proposal"]:
         st.warning("Aún no existen evaluaciones humanas validadas suficientes para proponer una oportunidad de aprendizaje.")
