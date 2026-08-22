@@ -170,8 +170,10 @@ with check (
   and teacher_id = (select auth.uid())
 );
 
+-- Supabase puede aplicar privilegios predeterminados a anon y authenticated al crear
+-- tablas en public. Retirarlos de ambos roles antes de conceder sólo lo necesario.
 revoke all on public.profiles, public.thinkmark_sessions, public.session_assignments,
-  public.learning_opportunities, public.access_audit from anon;
+  public.learning_opportunities, public.access_audit from anon, authenticated;
 grant select on public.profiles, public.thinkmark_sessions, public.session_assignments,
   public.learning_opportunities to authenticated;
 grant insert on public.learning_opportunities to authenticated;
