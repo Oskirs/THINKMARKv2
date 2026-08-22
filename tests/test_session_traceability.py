@@ -45,6 +45,16 @@ def test_incremental_migration_preserves_existing_schema() -> None:
     assert "save_thinkmark_session_v2" in sql
 
 
+def test_participant_code_hotfix_matches_application_validation() -> None:
+    root = Path(__file__).resolve().parents[1]
+    sql = (root / "supabase/migrations/202608210003_align_participant_code_constraint.sql").read_text(
+        encoding="utf-8"
+    )
+    assert "drop constraint if exists thinkmark_sessions_participant_code_check" in sql
+    assert "^[A-Z0-9][A-Z0-9-]{5,19}$" in sql
+    assert "validate constraint thinkmark_sessions_participant_code_check" in sql
+
+
 def test_local_repository_groups_participants_and_controls_status(tmp_path: Path) -> None:
     repository = LocalSessionRepository(tmp_path / "sessions.json")
     activity = repository.create_activity_session("Grupo piloto", "local-teacher", "local-evaluator")
